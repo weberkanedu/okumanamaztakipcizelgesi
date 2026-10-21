@@ -294,6 +294,35 @@
     border: 1px solid var(--line); border-radius: 10px;
   }
 
+  /* Kaza borcu kartı */
+  .debt { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 6px; min-width: 0; }
+  .debt-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .debt .lbl { font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .debt-edit { min-height: 32px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: var(--lapis); font-weight: 700; font-size: 13px; }
+  .debt-big { font-family: var(--f-display); font-weight: 700; font-size: clamp(22px, 6vw, 28px); line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .debt-sub { font-size: 13px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .debt-eta { font-size: 14px; font-weight: 700; }
+  .debt-eta b { color: var(--gold); }
+  .debt-cta {
+    min-height: 48px; border: 1px dashed var(--line); border-radius: 14px; background: transparent;
+    color: var(--muted); font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .debt-cta svg { width: 18px; height: 18px; color: var(--gold); }
+
+  /* Bir günlük kaza düğmesi ve geride kalan vakit rozeti */
+  .day-btn {
+    min-height: 48px; border: 1.5px solid var(--lapis); border-radius: 12px; background: transparent;
+    color: var(--lapis); font-weight: 800; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .day-btn svg { width: 18px; height: 18px; }
+  .day-btn small { font-weight: 600; font-size: 12px; color: var(--muted); }
+  .day-btn.undoing { border-color: var(--gold); color: var(--gold); }
+  .lag { font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 999px; background: var(--gold-soft); color: var(--gold); white-space: nowrap; }
+  .card.lagging { border-color: var(--gold); }
+
+  /* Kandil ve bayram rozeti */
+  .dates .hb { margin-top: 4px; font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: var(--gold-soft); color: var(--gold); white-space: nowrap; }
+
   /* Yedek hatırlatıcısı */
   .bk-note {
     display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 12px; align-items: center;
@@ -649,6 +678,7 @@
     <div class="dates">
       <span class="g" id="dateG"></span>
       <span class="h" id="dateH"></span>
+      <span class="hb" id="dateBadge" hidden></span>
     </div>
   </header>
 
@@ -680,6 +710,23 @@
       <span class="foot"><span class="tur-n">10</span> namazda bir</span>
     </div>
   </section>
+
+  <section class="debt" id="debt" aria-label="Kaza borcu" hidden>
+    <div class="debt-top"><span class="lbl">Kaza borcu</span><button class="debt-edit" id="debtEdit" type="button">Düzenle</button></div>
+    <span class="debt-big" id="debtBig"></span>
+    <div class="bar" aria-hidden="true"><span id="debtBar"></span></div>
+    <span class="debt-sub" id="debtSub"></span>
+    <span class="debt-eta" id="debtEta"></span>
+  </section>
+  <button class="debt-cta" id="debtCta" type="button" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15v2"/></svg>
+    Kaç yıllık kazam var? Hesapla
+  </button>
+
+  <button class="day-btn" id="dayBtn" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12.5l3.5 3.5L13 9.5"/><path d="M11 15.5l1 1L21 7.5"/></svg>
+    <span id="dayBtnTxt">1 günü kıldım</span><small id="dayBtnSub">6 vakit birden</small>
+  </button>
 
   <section class="grid" id="grid" aria-label="Vakitler"></section>
 
@@ -866,7 +913,7 @@
  <section class="screen" data-screen="ayarlar" hidden>
   <header class="top">
     <div>
-      <span class="eyebrow">Vakit, tur ve yedek</span>
+      <span class="eyebrow">Vakit, borç, tur ve yedek</span>
       <h1>Ayarlar</h1>
     </div>
   </header>
@@ -879,6 +926,21 @@
         <span class="or">veya</span>
         <input class="text-input" id="cityInput" type="text" placeholder="Şehir yaz, örn. Konya" autocomplete="address-level2">
         <button class="btn" id="citySave" type="button">Kaydet</button>
+      </div>
+  </div>
+
+  <h3 class="grp" id="debtSettings">Kaza borcu</h3>
+  <div class="sheet">
+      <p class="hint">Kılınmamış namazların tahmini sayısı. Namaz borcunun başladığı yaştan düzenli kılmaya başladığın yaşa kadar her gün, bir günlük kaza (vitr dahil 6 vakit) sayılır. Sonuç bir tahmindir; çizelgede kaza borcu kartında görünür.</p>
+      <div class="form-grid">
+        <label class="field">Borcun başladığı yaş<input class="text-input" id="dbStart" type="number" inputmode="numeric" min="7" max="20" placeholder="örn. 12"></label>
+        <label class="field">Düzenli kılmaya başladığın yaş<input class="text-input" id="dbEnd" type="number" inputmode="numeric" min="7" max="100" placeholder="örn. 22"></label>
+        <label class="field wide">Ayda düşülecek gün (hanımlar için özel hal günleri)<input class="text-input" id="dbOff" type="number" inputmode="numeric" min="0" max="15" placeholder="0"></label>
+      </div>
+      <p class="calc" id="dbPreview"></p>
+      <div class="row">
+        <button class="btn primary" id="dbSave" type="button">Kaydet</button>
+        <button class="btn" id="dbClear" type="button" hidden>Kaldır</button>
       </div>
   </div>
 
@@ -1018,7 +1080,7 @@
   var adOf = {};
   VAKITLER.forEach(function (v) { adOf[v.k] = v.ad; });
 
-  var state = { tur: 10, entries: [] };
+  var state = { tur: 10, entries: [], borc: null };
 
   function pad(x) { return String(x).padStart(2, "0"); }
   function dayKey(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
@@ -1034,6 +1096,10 @@
   var fmtMon = dtf({ month: "short" });
   var fmtShort = dtf({ day: "numeric", month: "short" });
 
+  function validBorc(b) {
+    return b && typeof b.s === "number" && typeof b.e === "number" && typeof b.off === "number" &&
+      b.s >= 7 && b.s <= 20 && b.e > b.s && b.e <= 100 && b.off >= 0 && b.off <= 15;
+  }
   function validTur(t) { return typeof t === "number" && t % 1 === 0 && t >= 1 && t <= TUR_MAX; }
   function validLogs(a) { return Array.isArray(a) && a.every(function (l) { return l && typeof l.t === "number" && typeof l.p === "number"; }); }
   function validItem(it) {
@@ -1051,6 +1117,7 @@
     return data && Array.isArray(data.entries) &&
       (data.tur === undefined || validTur(data.tur)) &&
       (data.okuma === undefined || validRd(data.okuma)) &&
+      (data.borc === undefined || data.borc === null || validBorc(data.borc)) &&
       data.entries.every(function (e) { return e && adOf[e.k] && typeof e.t === "number"; });
   }
   function load() {
@@ -1058,7 +1125,7 @@
       var raw = localStorage.getItem(KEY);
       if (raw) {
         var d = JSON.parse(raw);
-        if (valid(d)) state = { tur: d.tur || 10, entries: d.entries };
+        if (valid(d)) state = { tur: d.tur || 10, entries: d.entries, borc: d.borc || null };
       }
     } catch (e) {}
   }
@@ -1077,7 +1144,7 @@
     var card = document.createElement("article");
     card.className = "card";
     card.innerHTML =
-      '<div class="card-head"><h2>' + v.ad + '</h2><span class="ar" lang="ar" dir="rtl">' + v.ar + '</span></div>' +
+      '<div class="card-head"><h2>' + v.ad + '</h2><span class="ar" lang="ar" dir="rtl">' + v.ar + '</span><span class="lag" hidden></span></div>' +
       '<div class="ring"><svg viewBox="0 0 120 120" aria-hidden="true"></svg>' +
       '<div class="center"><span class="num">0</span><span class="sub"></span></div></div>' +
       '<div class="tours"></div>' +
@@ -1100,7 +1167,9 @@
       num: card.querySelector(".num"),
       sub: card.querySelector(".sub"),
       tours: card.querySelector(".tours"),
-      undo: card.querySelector(".undo")
+      undo: card.querySelector(".undo"),
+      ar: card.querySelector(".ar"),
+      lag: card.querySelector(".lag")
     };
   });
 
@@ -1334,6 +1403,8 @@
   }
   function isMilestone(n) { return n > 0 && (n % 7 === 0 || n % 30 === 0 || n % 365 === 0); }
   function renderEda() {
+    renderLag();
+    renderDebt();
     var n = fullDays();
     eda.hidden = n === 0;
     if (!n) return;
@@ -1348,6 +1419,140 @@
       dots.appendChild(i);
     });
   }
+  // Kaza borcu: yaşlardan tahmini gün sayısı; hız son 30 günün kayıtlarından
+  function yearsText(days) {
+    var y = Math.floor(days / 365), m = Math.floor((days % 365) / 30);
+    var t = (y ? y + " yıl" : "") + (y && m ? " " : "") + (m ? m + " ay" : "");
+    return t || days + " gün";
+  }
+  function debtDays(b) { var years = b.e - b.s; return Math.max(0, Math.round(years * 365 - years * 12 * b.off)); }
+  var fmtMonthYear = dtf({ month: "long", year: "numeric" });
+  function recentPace() {
+    var n = state.entries.length;
+    if (!n) return 0;
+    var span = Math.min(30, Math.max(1, Math.ceil((Date.now() - state.entries[0].t) / 864e5)));
+    var from = Date.now() - span * 864e5, c = 0;
+    for (var i = n - 1; i >= 0 && state.entries[i].t >= from; i--) c++;
+    return c / 6 / span; // günde kaç günlük kaza
+  }
+  function renderDebt() {
+    var b = state.borc, box = document.getElementById("debt");
+    box.hidden = !b;
+    document.getElementById("debtCta").hidden = !!b;
+    if (!b) return;
+    var total = debtDays(b), done = fullDays(), left = Math.max(0, total - done);
+    var pct = total ? Math.min(100, done / total * 100) : 100;
+    document.getElementById("debtBig").textContent = left ? yearsText(left) + " kaldı" : "Borç tamamlandı";
+    document.getElementById("debtBar").style.width = Math.max(pct, done ? 2 : 0) + "%";
+    document.getElementById("debtSub").textContent = total.toLocaleString("tr-TR") + " günün " + done.toLocaleString("tr-TR") + " günü eda edildi · %" + pct.toLocaleString("tr-TR", { maximumFractionDigits: 1 });
+    var eta = document.getElementById("debtEta");
+    eta.textContent = "";
+    if (!left) { eta.textContent = "Elhamdülillah, hesapladığın kaza borcu tamamlandı."; return; }
+    var pace = recentPace();
+    if (pace < 0.01) { eta.textContent = "Kılmaya başladıkça tahmini bitiş tarihi burada görünür."; return; }
+    var end = addDays(new Date(), Math.ceil(left / pace));
+    var gain = Math.ceil(left / pace) - Math.ceil(left / (pace + 1));
+    eta.appendChild(document.createTextNode("Bu hızla "));
+    var bEnd = document.createElement("b"); bEnd.textContent = fmtMonthYear.format(end); eta.appendChild(bEnd);
+    eta.appendChild(document.createTextNode(" ayında biter. Günde 1 gün daha kılarsan " + yearsText(gain) + " erken."));
+  }
+  function goDebtSettings() {
+    showScreen("ayarlar");
+    var h = document.getElementById("debtSettings");
+    if (h) h.scrollIntoView({ block: "start" });
+    setTimeout(function () { document.getElementById("dbStart").focus(); }, 50);
+  }
+  document.getElementById("debtCta").addEventListener("click", goDebtSettings);
+  document.getElementById("debtEdit").addEventListener("click", goDebtSettings);
+  function dbRead() {
+    return { s: Number(document.getElementById("dbStart").value), e: Number(document.getElementById("dbEnd").value), off: Number(document.getElementById("dbOff").value || 0) };
+  }
+  function dbFill() {
+    var b = state.borc;
+    document.getElementById("dbStart").value = b ? b.s : "";
+    document.getElementById("dbEnd").value = b ? b.e : "";
+    document.getElementById("dbOff").value = b && b.off ? b.off : "";
+    document.getElementById("dbClear").hidden = !b;
+    dbPreview();
+  }
+  function dbPreview() {
+    var b = dbRead(), p = document.getElementById("dbPreview");
+    if (!document.getElementById("dbStart").value || !document.getElementById("dbEnd").value) { p.textContent = "İki yaşı yazınca tahmini borç burada görünür."; return; }
+    if (!validBorc(b)) { p.textContent = "Başlangıç yaşı 7 ile 20 arasında, düzenli kılmaya başladığın yaş ondan büyük olmalı. Ayda düşülecek gün en fazla 15."; return; }
+    var d = debtDays(b);
+    p.innerHTML = "";
+    p.appendChild(document.createTextNode("Tahmini borç: "));
+    var bb = document.createElement("b"); bb.textContent = yearsText(d); p.appendChild(bb);
+    p.appendChild(document.createTextNode(" · " + d.toLocaleString("tr-TR") + " gün · " + (d * 6).toLocaleString("tr-TR") + " namaz"));
+  }
+  ["dbStart", "dbEnd", "dbOff"].forEach(function (id) { document.getElementById(id).addEventListener("input", dbPreview); });
+  document.getElementById("dbSave").addEventListener("click", function () {
+    var b = dbRead();
+    if (!validBorc(b)) { dbPreview(); toast("Yaşları kontrol et."); return; }
+    state.borc = b; save(); renderDebt(); dbFill();
+    toast("Kaza borcu kaydedildi: " + yearsText(debtDays(b)));
+  });
+  document.getElementById("dbClear").addEventListener("click", function () {
+    state.borc = null; save(); renderDebt(); dbFill();
+    toast("Kaza borcu kaldırıldı");
+  });
+
+  // Geride kalan vakit: en az kılınan vakit, bir üstündekinden en az 2 gerideyse rozet çıkar.
+  // (Sırayla kılarken oluşan 1'lik farklar uyarı sayılmaz.)
+  function renderLag() {
+    var list = VAKITLER.map(function (v) { return count(v.k); });
+    var min = Math.min.apply(null, list);
+    var above = list.filter(function (n) { return n > min; });
+    var gap = above.length ? Math.min.apply(null, above) - min : 0;
+    VAKITLER.forEach(function (v, i) {
+      var c = cards[v.k], on = gap >= 2 && list[i] === min;
+      c.el.classList.toggle("lagging", on);
+      c.lag.hidden = !on;
+      c.ar.hidden = on;
+      if (on) {
+        c.lag.textContent = gap + " geride";
+        c.lag.title = gap + " " + v.ad.toLocaleLowerCase("tr-TR") + " kazası kılarsan tamamlanan gün " + gap + " artar";
+      }
+    });
+  }
+
+  // Bir günlük kaza: altı vakti birden ekler; yanlış dokunuşa karşı 6 saniye geri alınabilir
+  var dayBtn = document.getElementById("dayBtn"), dayUndo = null, dayTimer = null;
+  function dayBtnReset() {
+    clearTimeout(dayTimer); dayUndo = null;
+    dayBtn.classList.remove("undoing");
+    document.getElementById("dayBtnTxt").textContent = "1 günü kıldım";
+    document.getElementById("dayBtnSub").textContent = "6 vakit birden";
+  }
+  dayBtn.addEventListener("click", function () {
+    if (dayUndo) {
+      dayUndo.forEach(function (e) { var i = state.entries.lastIndexOf(e); if (i >= 0) { state.entries.splice(i, 1); tally(e, -1); } });
+      save();
+      VAKITLER.forEach(function (v) { renderCard(v.k); });
+      renderSummary(false);
+      dayBtnReset();
+      toast("Bir günlük kaza geri alındı");
+      return;
+    }
+    var before = fullDays(), wasHidden = eda.hidden, t = Date.now();
+    var added = VAKITLER.map(function (v) { return { k: v.k, t: t }; });
+    added.forEach(function (e) { state.entries.push(e); tally(e, 1); });
+    save();
+    VAKITLER.forEach(function (v) { renderCard(v.k); });
+    renderSummary(false);
+    var after = fullDays();
+    if (after > before) celebrate(after, wasHidden);
+    else {
+      toast("Her vakitten birer kaza eklendi");
+      if (navigator.vibrate) { try { navigator.vibrate(20); } catch (e) {} }
+    }
+    dayUndo = added;
+    dayBtn.classList.add("undoing");
+    document.getElementById("dayBtnTxt").textContent = "Geri al";
+    document.getElementById("dayBtnSub").textContent = "6 vakit eklendi";
+    dayTimer = setTimeout(dayBtnReset, 6000);
+  });
+
   function celebrate(n, wasHidden) {
     eda.classList.remove("rise", "glow");
     void eda.offsetWidth;
@@ -1572,7 +1777,7 @@
       else if (!found) { found = true; cls += " next"; }
       return '<span class="' + cls + '"><b>' + p[1] + '</b>' + td[p[0]] + '</span>';
     });
-    if (HICRI[td.h.m - 1]) document.getElementById("dateH").textContent = td.h.d + " " + HICRI[td.h.m - 1] + " " + td.h.y;
+    renderHijri();
     setRun(items.join("") + dot, true);
   }
 
@@ -1628,18 +1833,49 @@
   document.getElementById("citySave").addEventListener("click", saveCity);
   document.getElementById("cityInput").addEventListener("keydown", function (e) { if (e.key === "Enter") saveCity(); });
 
-  // Başlıktaki tarih; hicri tarih vakitler gelene kadar cihazın takviminden
-  function renderDates() {
-    var now = new Date();
-    document.getElementById("dateG").textContent = fmtHead.format(now);
-    var td = getDay(startOfDay(now));
-    if (td && HICRI[td.h.m - 1]) { document.getElementById("dateH").textContent = td.h.d + " " + HICRI[td.h.m - 1] + " " + td.h.y; return; }
+  // Hicri tarih: vakit servisinden (Diyanet hesabı) yoksa cihazın takviminden
+  function hijriOf(d) {
+    var td = getDay(startOfDay(d));
+    if (td && HICRI[td.h.m - 1]) return td.h;
     try {
-      var parts = new Intl.DateTimeFormat("en-u-ca-islamic-umalqura", { day: "numeric", month: "numeric", year: "numeric" }).formatToParts(now);
+      var parts = new Intl.DateTimeFormat("en-u-ca-islamic-umalqura", { day: "numeric", month: "numeric", year: "numeric" }).formatToParts(d);
       var get = function (t) { var p = parts.filter(function (x) { return x.type === t; })[0]; return p ? parseInt(p.value, 10) : NaN; };
-      var hm = get("month");
-      if (HICRI[hm - 1]) document.getElementById("dateH").textContent = get("day") + " " + HICRI[hm - 1] + " " + get("year");
-    } catch (e) {}
+      var h = { d: get("day"), m: get("month"), y: get("year") };
+      return HICRI[h.m - 1] ? h : null;
+    } catch (e) { return null; }
+  }
+  // Kandiller o günün akşamı (gecesi) için gösterilir
+  function specialDay(now) {
+    var h = hijriOf(now), t = hijriOf(addDays(now, 1));
+    if (!h) return "";
+    var m = h.m, d = h.d;
+    if (t && t.m === 7 && t.d <= 7 && now.getDay() === 4) return "Bu gece Regaib Kandili";
+    if (m === 1 && d === 1) return "Hicri Yılbaşı";
+    if (m === 1 && d === 10) return "Aşure Günü";
+    if (m === 3 && d === 11) return "Bu gece Mevlid Kandili";
+    if (m === 7 && d === 1) return "Üç Aylar başladı";
+    if (m === 7 && d === 26) return "Bu gece Miraç Kandili";
+    if (m === 8 && d === 14) return "Bu gece Berat Kandili";
+    if (t && t.m === 9 && t.d === 1) return "Yarın Ramazan başlıyor";
+    if (m === 9 && d === 26) return "Bu gece Kadir Gecesi";
+    if (t && t.m === 10 && t.d === 1) return "Ramazan Bayramı Arefesi";
+    if (m === 9) return "Ramazan'ın " + d + ". günü";
+    if (m === 10 && d <= 3) return "Ramazan Bayramı " + d + ". gün";
+    if (m === 12 && d === 9) return "Kurban Bayramı Arefesi";
+    if (m === 12 && d >= 10 && d <= 13) return "Kurban Bayramı " + (d - 9) + ". gün";
+    return "";
+  }
+  function renderHijri() {
+    var now = new Date(), h = hijriOf(now);
+    if (h) document.getElementById("dateH").textContent = h.d + " " + HICRI[h.m - 1] + " " + h.y;
+    var badge = document.getElementById("dateBadge"), sp = specialDay(now);
+    badge.hidden = !sp;
+    badge.textContent = sp;
+  }
+  // Başlıktaki tarih
+  function renderDates() {
+    document.getElementById("dateG").textContent = fmtHead.format(new Date());
+    renderHijri();
   }
 
   // Dakikada bir: geri sayım, gün değişince her şey
@@ -1701,7 +1937,7 @@
 
   // Yedek: dışarı aktar
   function backupJson() {
-    return JSON.stringify({ app: "kaza-defteri", v: 3, tur: state.tur, exportedAt: new Date().toISOString(), entries: state.entries, okuma: rd });
+    return JSON.stringify({ app: "kaza-defteri", v: 3, tur: state.tur, exportedAt: new Date().toISOString(), entries: state.entries, borc: state.borc, okuma: rd });
   }
   function backupName() {
     var d = new Date();
@@ -1777,12 +2013,13 @@
     if (!pending) return;
     state = {
       tur: pending.tur || state.tur,
-      entries: pending.entries.slice().sort(function (a, b) { return a.t - b.t; })
+      entries: pending.entries.slice().sort(function (a, b) { return a.t - b.t; }),
+      borc: pending.borc !== undefined ? pending.borc : state.borc
     };
     if (pending.okuma) { rd = normRd(pending.okuma); rdSave(); rdView = "list"; renderReading(); }
     pending = null;
     importConfirm.hidden = true;
-    save(); renderAll();
+    save(); renderAll(); dbFill(); renderBackupNote();
     toast(state.entries.length + " kayıt geri yüklendi");
   });
   document.getElementById("importNo").addEventListener("click", function () { pending = null; importConfirm.hidden = true; });
@@ -1809,7 +2046,7 @@
   document.getElementById("resetBtn").addEventListener("click", function () { resetRow.hidden = true; resetConfirm.hidden = false; });
   document.getElementById("resetNo").addEventListener("click", function () { resetRow.hidden = false; resetConfirm.hidden = true; });
   document.getElementById("resetYes").addEventListener("click", function () {
-    state = { tur: state.tur, entries: [] }; save(); renderAll();
+    state = { tur: state.tur, entries: [], borc: state.borc }; save(); renderAll();
     resetRow.hidden = false; resetConfirm.hidden = true;
     toast("Tüm kayıtlar silindi");
   });
@@ -2375,6 +2612,7 @@
   renderAll();
   renderReading();
   renderBackupNote();
+  dbFill();
   refreshPrayer();
   var startTab = (location.hash || "").slice(1);
   if (SCREENS.indexOf(startTab) < 0) { try { startTab = localStorage.getItem(TAB_KEY) || ""; } catch (e) { startTab = ""; } }
