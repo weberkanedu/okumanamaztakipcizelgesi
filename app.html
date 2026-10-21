@@ -156,6 +156,9 @@
   .rd-big span { font-family: var(--f-display); font-weight: 700; font-size: 56px; line-height: 1; color: var(--band-accent); font-variant-numeric: tabular-nums; }
   .rd-big small { font-size: 16px; font-weight: 700; color: var(--band-fg); }
   .rd-sub { font-size: 13px; color: var(--band-muted); font-weight: 600; }
+  .rd-where { margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--band-line); font-size: 14px; font-weight: 700; color: var(--band-fg); font-variant-numeric: tabular-nums; }
+  .rd-where b { color: var(--band-accent); }
+  .rd-card .where { font-size: 13px; font-weight: 700; color: var(--lapis); font-variant-numeric: tabular-nums; }
   .rd-prog-head { display: flex; justify-content: space-between; align-items: baseline; font-variant-numeric: tabular-nums; }
   .rd-prog-head b { font-family: var(--f-display); font-size: 22px; }
   .rd-prog-head #rdPct { font-weight: 800; color: var(--turq); }
@@ -201,37 +204,37 @@
     left: 50%;
     bottom: calc(14px + env(safe-area-inset-bottom, 0px));
     transform: translateX(-50%);
-    width: min(calc(100% - 32px), 420px);
     display: flex;
-    gap: 4px;
-    padding: 6px;
+    gap: 2px;
+    padding: 5px;
     background: var(--nav-bg);
     border: 1px solid var(--line);
-    border-radius: 24px;
+    border-radius: 999px;
     box-shadow: var(--nav-shadow);
     -webkit-backdrop-filter: blur(16px) saturate(1.4);
     backdrop-filter: blur(16px) saturate(1.4);
   }
   .nav button {
-    flex: 1 1 0;
-    min-width: 0;
-    min-height: 54px;
-    display: grid;
-    justify-items: center;
-    align-content: center;
-    gap: 3px;
-    padding: 6px 2px;
+    min-width: 46px;
+    min-height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 12px;
     border: 0;
-    border-radius: 18px;
+    border-radius: 999px;
     background: transparent;
     color: var(--muted);
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
-    letter-spacing: .02em;
-    transition: background .2s, color .2s;
+    white-space: nowrap;
+    transition: background .2s, color .2s, padding .2s;
   }
-  .nav button svg { width: 22px; height: 22px; }
-  .nav button[aria-current="page"] { background: var(--lapis); color: var(--on-lapis); }
+  .nav button svg { width: 21px; height: 21px; flex: none; }
+  .nav button span { display: none; }
+  .nav button[aria-current="page"] { background: var(--lapis); color: var(--on-lapis); padding: 0 16px 0 14px; }
+  .nav button[aria-current="page"] span { display: inline; }
   button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
   button:focus-visible, textarea:focus-visible, input:focus-visible, summary:focus-visible {
     outline: 2px solid var(--lapis); outline-offset: 2px;
@@ -256,32 +259,16 @@
 
   /* Vakit bandı */
   .ticker {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
+    display: flex;
     align-items: stretch;
     background: var(--band-bg);
     color: var(--band-fg);
     border: 1px solid var(--band-line);
     border-radius: 12px;
     overflow: hidden;
-    min-height: 46px;
+    min-height: 40px;
   }
-  .tk-lead {
-    display: flex; align-items: center; gap: 10px;
-    padding: 8px 12px;
-    border-right: 1px solid var(--band-line);
-    min-width: 0;
-  }
-  .tk-place {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: transparent; border: 0; padding: 4px 2px;
-    color: var(--band-fg); font-weight: 800; font-size: 14px;
-    max-width: 160px;
-  }
-  .tk-place span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .tk-place svg { width: 16px; height: 16px; flex: none; color: var(--band-accent); }
-  .tk-next { font-size: 13px; font-weight: 700; color: var(--band-accent); white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .tk-track { position: relative; overflow: hidden; display: flex; align-items: center; min-width: 0; }
+  .tk-track { position: relative; overflow: hidden; display: flex; align-items: center; min-width: 0; flex: 1 1 auto; }
   .tk-run { display: inline-flex; align-items: center; gap: 26px; padding: 0 14px; white-space: nowrap; font-size: 14px; }
   .tk-run.anim { animation: marquee var(--tk-dur, 40s) linear infinite; }
   .ticker:hover .tk-run.anim, .ticker:focus-within .tk-run.anim { animation-play-state: paused; }
@@ -298,16 +285,9 @@
     font-weight: 700; font-size: 13px; white-space: nowrap;
   }
   @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-  @media (max-width: 560px) {
-    .ticker { grid-template-columns: minmax(0, 1fr); }
-    .tk-lead { border-right: 0; border-bottom: 1px solid var(--band-line); justify-content: space-between; }
-    .tk-track { min-height: 38px; }
-  }
-  .tk-form {
-    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px;
-  }
+  .tk-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .tk-form .or { color: var(--muted); font-size: 13px; }
+  .pt-place { font-weight: 800; color: var(--ink); }
   .text-input {
     flex: 1 1 160px; min-width: 0; min-height: 44px; padding: 0 12px;
     font: inherit; color: var(--ink); background: var(--bg);
@@ -558,6 +538,10 @@
 
 <main class="wrap">
  <section class="screen" data-screen="cizelge">
+  <section class="ticker" aria-label="Bugünün namaz vakitleri">
+    <div class="tk-track"><div class="tk-run" id="tkRun"></div></div>
+  </section>
+
   <header class="top">
     <div>
       <span class="eyebrow">Kaza namazı</span>
@@ -568,23 +552,6 @@
       <span class="h" id="dateH"></span>
     </div>
   </header>
-
-  <section class="ticker" aria-label="Namaz vakitleri">
-    <div class="tk-lead">
-      <button class="tk-place" id="tkPlace" type="button" aria-label="Konumu değiştir">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
-        <span id="tkPlaceTxt">Namaz vakitleri</span>
-      </button>
-      <span class="tk-next" id="tkNext"></span>
-    </div>
-    <div class="tk-track"><div class="tk-run" id="tkRun"></div></div>
-  </section>
-  <div class="tk-form" id="tkForm" hidden>
-    <button class="btn primary" id="geoBtn" type="button">Konumumu kullan</button>
-    <span class="or">veya</span>
-    <input class="text-input" id="cityInput" type="text" placeholder="Şehir yaz, örn. Konya" autocomplete="address-level2">
-    <button class="btn" id="citySave" type="button">Kaydet</button>
-  </div>
 
   <section class="kpis" aria-label="Özet">
     <div class="kpi">
@@ -722,6 +689,7 @@
       </div>
       <div class="rd-big"><span id="rdTodayLeft">0</span><small id="rdTodayUnit">sayfa</small></div>
       <span class="rd-sub" id="rdTodaySub"></span>
+      <span class="rd-where" id="rdWhere"></span>
     </div>
 
     <div class="sheet">
@@ -782,10 +750,21 @@
  <section class="screen" data-screen="ayarlar" hidden>
   <header class="top">
     <div>
-      <span class="eyebrow">Tur ve yedek</span>
+      <span class="eyebrow">Vakit, tur ve yedek</span>
       <h1>Ayarlar</h1>
     </div>
   </header>
+
+  <h3 class="grp">Namaz vakitleri</h3>
+  <div class="sheet">
+      <p class="hint">Çizelgenin üstündeki bant bu konuma göre Diyanet vakitlerini gösterir. Şu an: <span class="pt-place" id="ptPlace">seçilmedi</span></p>
+      <div class="tk-form">
+        <button class="btn primary" id="geoBtn" type="button">Konumumu kullan</button>
+        <span class="or">veya</span>
+        <input class="text-input" id="cityInput" type="text" placeholder="Şehir yaz, örn. Konya" autocomplete="address-level2">
+        <button class="btn" id="citySave" type="button">Kaydet</button>
+      </div>
+  </div>
 
   <h3 class="grp">Tur</h3>
   <div class="sheet">
@@ -861,17 +840,17 @@
 </main>
 
 <nav class="nav" aria-label="Ana gezinme">
-  <button type="button" data-go="cizelge" aria-current="page">
+  <button type="button" data-go="cizelge" aria-label="Çizelge" aria-current="page">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><path d="m14 17.2 2 2 3.5-3.7"/></svg>
-    Çizelge
+    <span>Çizelge</span>
   </button>
-  <button type="button" data-go="okuma">
+  <button type="button" data-go="okuma" aria-label="Okuma">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5C10 5 7 4.5 3 4.8v13.7c4-.3 7 .2 9 1.7 2-1.5 5-2 9-1.7V4.8c-4-.3-7 .2-9 1.7Z"/><path d="M12 6.5v13.7"/></svg>
-    Okuma
+    <span>Okuma</span>
   </button>
-  <button type="button" data-go="ayarlar">
+  <button type="button" data-go="ayarlar" aria-label="Ayarlar">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>
-    Ayarlar
+    <span>Ayarlar</span>
   </button>
 </nav>
 
@@ -1310,9 +1289,7 @@
   }
 
   var tkRun = document.getElementById("tkRun");
-  var tkNext = document.getElementById("tkNext");
-  var tkPlaceTxt = document.getElementById("tkPlaceTxt");
-  var tkForm = document.getElementById("tkForm");
+  var ptPlace = document.getElementById("ptPlace");
   var lastRunHtml = "";
 
   function setRun(html, animate) {
@@ -1328,43 +1305,29 @@
   }
 
   function renderTicker() {
-    tkPlaceTxt.textContent = pt.loc ? (pt.place || "Konumun") : "Namaz vakitleri";
+    ptPlace.textContent = pt.loc ? (pt.place || "Konumun") : "seçilmedi";
     if (ptStatus === "idle") {
-      tkNext.textContent = "";
-      setRun('<span class="tk-msg">Konumuna göre Diyanet vakitlerini görmek için</span><button class="tk-btn" type="button" data-act="geo">Konumumu kullan</button><button class="tk-btn" type="button" data-act="city">Şehir yaz</button>', false);
+      setRun('<span class="tk-msg">Namaz vakitleri için konum seç</span><button class="tk-btn" type="button" data-act="set">Ayarla</button>', false);
       return;
     }
-    if (ptStatus === "loading") { tkNext.textContent = ""; setRun('<span class="tk-msg">Vakitler alınıyor…</span>', false); return; }
+    if (ptStatus === "loading") { setRun('<span class="tk-msg">Vakitler alınıyor…</span>', false); return; }
     if (ptStatus === "error") {
-      tkNext.textContent = "";
-      setRun('<span class="tk-msg">' + ptMsg + '</span><button class="tk-btn" type="button" data-act="retry">Tekrar dene</button><button class="tk-btn" type="button" data-act="city">Şehir yaz</button>', false);
+      setRun('<span class="tk-msg">' + ptMsg + '</span><button class="tk-btn" type="button" data-act="retry">Tekrar dene</button><button class="tk-btn" type="button" data-act="set">Ayarla</button>', false);
       return;
     }
     var now = new Date(), today = startOfDay(now);
     var td = getDay(today);
     if (!td) { refreshPrayer(); return; }
-    var next = null, nextName = "";
+    var found = false;
+    var dot = '<span class="tk-dot" aria-hidden="true"></span>';
     var items = PT_NAMES.map(function (p) {
-      var t = at(today, td[p[0]]);
       var cls = "tk-item";
-      if (t <= now) cls += " past";
-      else if (!next) { next = t; nextName = p[1]; cls += " next"; }
+      if (at(today, td[p[0]]) <= now) cls += " past";
+      else if (!found) { found = true; cls += " next"; }
       return '<span class="' + cls + '"><b>' + p[1] + '</b>' + td[p[0]] + '</span>';
     });
-    if (!next) {
-      var tm = getDay(addDays(today, 1));
-      if (tm) { next = at(addDays(today, 1), tm.imsak); nextName = "İmsak"; }
-    }
-    if (next) {
-      var mins = Math.max(0, Math.round((next - now) / 60000));
-      var h = Math.floor(mins / 60), mm = mins % 60;
-      tkNext.textContent = nextName + " · " + (h ? h + " sa " : "") + mm + " dk";
-    } else { tkNext.textContent = ""; }
-    var hijri = HICRI[td.h.m - 1] ? td.h.d + " " + HICRI[td.h.m - 1] + " " + td.h.y : "";
-    if (hijri) document.getElementById("dateH").textContent = hijri;
-    var dot = '<span class="tk-dot" aria-hidden="true"></span>';
-    var extra = (hijri ? dot + '<span class="tk-item">' + hijri + '</span>' : "") + dot + '<span class="tk-item"><b>Kaynak</b>Diyanet hesaplama yöntemi</span>' + dot;
-    setRun(items.join("") + extra, true);
+    if (HICRI[td.h.m - 1]) document.getElementById("dateH").textContent = td.h.d + " " + HICRI[td.h.m - 1] + " " + td.h.y;
+    setRun(items.join("") + dot, true);
   }
 
   tkRun.addEventListener("click", function (e) {
@@ -1373,9 +1336,8 @@
     var act = b.getAttribute("data-act");
     if (act === "geo") useGeo();
     else if (act === "retry") refreshPrayer();
-    else if (act === "city") { tkForm.hidden = false; document.getElementById("cityInput").focus(); }
+    else if (act === "set") showScreen("ayarlar");
   });
-  document.getElementById("tkPlace").addEventListener("click", function () { tkForm.hidden = !tkForm.hidden; });
 
   function setLoc(loc, place) {
     var same = pt.loc && JSON.stringify(pt.loc) === JSON.stringify(loc);
@@ -1383,12 +1345,12 @@
     pt.place = place;
     if (!same) pt.months = {};
     ptSave();
-    tkForm.hidden = true;
     refreshPrayer();
+    toast("Vakitler " + place + " için ayarlandı");
   }
 
   function useGeo() {
-    if (!navigator.geolocation) { ptStatus = "error"; ptMsg = "Bu cihazda konum kullanılamıyor. Şehrini yazabilirsin."; renderTicker(); return; }
+    if (!navigator.geolocation) { ptStatus = "error"; ptMsg = "Bu cihazda konum kullanılamıyor. Şehrini yazabilirsin."; renderTicker(); toast(ptMsg); return; }
     ptStatus = "loading"; renderTicker();
     navigator.geolocation.getCurrentPosition(function (pos) {
       var lat = pos.coords.latitude.toFixed(3), lng = pos.coords.longitude.toFixed(3);
@@ -1405,6 +1367,7 @@
       ptStatus = "error";
       ptMsg = err && err.code === 1 ? "Konum izni verilmedi. Şehrini yazabilirsin." : "Konum alınamadı. Şehrini yazabilirsin.";
       renderTicker();
+      toast(ptMsg);
     }, { enableHighAccuracy: false, timeout: 15000, maximumAge: 6 * 3600 * 1000 });
   }
   document.getElementById("geoBtn").addEventListener("click", useGeo);
@@ -1708,6 +1671,7 @@
       var ok = c.done || c.todayLeft === 0;
       card.appendChild(el("div", "today" + (ok ? " ok" : ""),
         c.done ? "Tamamlandı ✓" : c.todayLeft === 0 ? "Bugün tamam ✓" : "Bugün " + c.todayLeft + " sayfa kaldı"));
+      if (!c.done) card.appendChild(el("div", "where", (c.read + 1) + ". sayfadan devam"));
       var bar = el("div", "bar"), fill = el("span");
       fill.style.width = pct + "%";
       bar.appendChild(fill);
@@ -1841,7 +1805,7 @@
     if (after.done && !before.done) toast(it.name + " tamamlandı. Allah kabul etsin");
     else if (past) toast(p + " sayfa " + fmtShort.format(new Date(t)) + " gününe eklendi");
     else if (after.todayLeft === 0 && before.todayLeft > 0) toast("Bugünkü okuma hedefi tamam");
-    else toast(p + " sayfa eklendi");
+    else toast(p + " sayfa eklendi · " + (after.read + 1) + ". sayfadan devam");
   }
   $("rdAdd").addEventListener("click", function () { rdAdd(pagesVal()); });
   rdPages.addEventListener("keydown", function (e) { if (e.key === "Enter") rdAdd(pagesVal()); });
@@ -1974,6 +1938,16 @@
       $("rdTodayLeft").textContent = c.todayLeft;
       $("rdTodayUnit").textContent = "sayfa";
       $("rdTodaySub").textContent = "Bugünün hedefi " + c.todayNeed + " sayfa · " + c.todayRead + " okundu";
+    }
+    // Kaldığın yer: okunan sayfa sayısının bir sonrası
+    var where = $("rdWhere");
+    where.hidden = c.done;
+    if (!c.done) {
+      var from = c.read + 1;
+      where.innerHTML = "";
+      where.appendChild(document.createTextNode("Kaldığın yer: "));
+      where.appendChild(el("b", "", from + ". sayfa"));
+      if (c.todayLeft > 0) where.appendChild(document.createTextNode(" · bugün " + from + "–" + Math.min(it.total, c.read + c.todayLeft) + " arası"));
     }
     // Plandan geriyse: bugün akşama kadar plana yetişmek için okunması gereken
     var catchUp = Math.ceil(c.plan * Math.min(c.dayNo, it.days) - c.readRaw);

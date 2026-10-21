@@ -1,5 +1,5 @@
 ﻿// Uygulamayı çevrimdışı açılabilir tutar. Dosya değişince CACHE sürümünü artır.
-const CACHE = "kaza-defteri-v7";
+const CACHE = "kaza-defteri-v9";
 const CORE = [
   "./",
   "index.html",
