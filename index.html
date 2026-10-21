@@ -417,6 +417,93 @@
   @keyframes pulse { 0% { transform: scale(1); } 40% { transform: scale(1.07); } 100% { transform: scale(1); } }
   @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
 
+  /* Eda edilen kaza: her vakitten birer kaza bir gün sayılır */
+  .eda {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--band-bg);
+    color: var(--band-fg);
+    border: 1px solid var(--band-line);
+    border-radius: 18px;
+    transform-origin: top center;
+  }
+  .eda-seal { width: 46px; height: 46px; color: var(--band-accent); }
+  .eda-seal svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .eda-seal .ck { fill: none; stroke: var(--band-bg); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .eda-txt { display: grid; gap: 2px; min-width: 0; }
+  .eda .lbl { font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--band-muted); }
+  .eda-big { font-family: var(--f-display); font-weight: 700; font-size: clamp(20px, 5.4vw, 26px); line-height: 1.15; color: var(--band-accent); }
+  .eda-sub { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; font-size: 13px; font-weight: 600; color: var(--band-muted); font-variant-numeric: tabular-nums; }
+  .eda-dots { display: inline-flex; gap: 4px; }
+  .eda-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--band-line); }
+  .eda-dots i.on { background: var(--band-accent); }
+  .eda.rise { animation: edaRise .75s cubic-bezier(.2, .9, .3, 1.15) both; }
+  .eda.glow::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .26) 50%, transparent 65%);
+    transform: translateX(-100%);
+    animation: edaShine 1.1s ease-out .2s forwards;
+  }
+  .eda.glow .eda-seal svg { animation: sealPop .7s ease-out .15s; }
+  @keyframes edaRise { from { opacity: 0; transform: translateY(-30px) scaleY(.4); } to { opacity: 1; transform: none; } }
+  @keyframes edaShine { to { transform: translateX(100%); } }
+  @keyframes sealPop { 0% { transform: scale(1) rotate(0); } 45% { transform: scale(1.25) rotate(22deg); } 100% { transform: scale(1) rotate(45deg); } }
+  .fx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 40; pointer-events: none; }
+
+  /* Günün ayeti ve hadisi */
+  .bubble {
+    position: fixed;
+    z-index: 29;
+    right: max(16px, env(safe-area-inset-right, 0px));
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 1px solid var(--band-line);
+    background: var(--band-bg);
+    color: var(--band-accent);
+    box-shadow: var(--nav-shadow);
+    display: grid;
+    place-items: center;
+    animation: bob 3.2s ease-in-out infinite;
+  }
+  .bubble::after {
+    content: ""; position: absolute; inset: -5px; border-radius: 50%;
+    border: 2px solid var(--band-accent); opacity: 0;
+    animation: bubbleRing 2.4s ease-out infinite;
+  }
+  .bubble svg { width: 24px; height: 24px; }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  @keyframes bubbleRing { 0% { transform: scale(.85); opacity: .55; } 100% { transform: scale(1.4); opacity: 0; } }
+  .daily {
+    border: 0; padding: 0; background: transparent; color: var(--ink);
+    width: min(520px, calc(100% - 32px)); max-width: none;
+    max-height: calc(100% - 48px);
+  }
+  .daily::backdrop { background: rgba(8, 15, 28, .55); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+  .daily-in {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 20px;
+    padding: 18px 18px 16px; display: grid; gap: 14px;
+    max-height: calc(100vh - 48px); overflow: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .3);
+  }
+  .daily[open] .daily-in { animation: dlgIn .32s cubic-bezier(.2, .9, .3, 1.1); }
+  @keyframes dlgIn { from { opacity: 0; transform: translateY(18px) scale(.97); } to { opacity: 1; transform: none; } }
+  .daily-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .daily-head h2 { margin: 2px 0 0; font-family: var(--f-display); font-weight: 700; font-size: 22px; line-height: 1.15; }
+  .daily-x { width: 40px; height: 40px; flex: none; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 22px; line-height: 1; }
+  .daily-sec { display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .daily-sec .lbl { font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+  .daily-ar { margin: 0; font-family: var(--f-ar); font-size: 24px; line-height: 1.9; text-align: right; }
+  .daily-tr { margin: 0; font-size: 16px; line-height: 1.6; }
+  .daily-ref { font-size: 12px; font-weight: 700; color: var(--muted); }
+  .daily-ok { justify-content: center; min-height: 48px; }
+
   /* Isı haritası */
   .heat {
     background: var(--surface);
@@ -554,6 +641,7 @@
     .tk-track { overflow-x: auto; }
     .screen { animation: none; }
     .nav button { transition: none; }
+    .eda.rise, .eda.glow::after, .eda.glow .eda-seal svg, .bubble, .bubble::after, .daily[open] .daily-in { animation: none; }
   }
 </style>
 
@@ -598,6 +686,17 @@
   </section>
 
   <section class="grid" id="grid" aria-label="Vakitler"></section>
+
+  <section class="eda" id="eda" aria-live="polite" hidden>
+    <div class="eda-seal" aria-hidden="true">
+      <svg viewBox="0 0 48 48"><g fill="currentColor"><rect x="10" y="10" width="28" height="28" rx="3"/><rect x="10" y="10" width="28" height="28" rx="3" transform="rotate(45 24 24)"/></g><path class="ck" d="M17 24.5l4.5 4.5L31 19.5"/></svg>
+    </div>
+    <div class="eda-txt">
+      <span class="lbl">Eda edildi</span>
+      <span class="eda-big" id="edaBig"></span>
+      <span class="eda-sub"><span id="edaDays"></span><span class="eda-next">Sıradaki gün <span class="eda-dots" id="edaDots"></span></span></span>
+    </div>
+  </section>
 
   <section class="heat" aria-label="Kaza takvimi">
     <div class="sec-head">
@@ -874,6 +973,34 @@
     <span>Ayarlar</span>
   </button>
 </nav>
+
+<button class="bubble" id="dailyBtn" type="button" aria-label="Günün ayeti ve hadisi" hidden>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7C10.2 5.6 7.4 5.1 4 5.4v12.2c3.4-.3 6.2.2 8 1.6 1.8-1.4 4.6-1.9 8-1.6V5.4c-3.4-.3-6.2.2-8 1.6Z"/><path d="M12 7v12.2"/><path d="M18.5 1.5v3M17 3h3" stroke-width="1.6"/></svg>
+</button>
+
+<dialog class="daily" id="dailyDlg" aria-labelledby="dailyTitle">
+  <div class="daily-in">
+    <div class="daily-head">
+      <div>
+        <span class="eyebrow" id="dailyDate"></span>
+        <h2 id="dailyTitle">Günün ayeti ve hadisi</h2>
+      </div>
+      <button class="daily-x" id="dailyClose" type="button" aria-label="Kapat">×</button>
+    </div>
+    <section class="daily-sec">
+      <span class="lbl">Günün ayeti</span>
+      <p class="daily-ar" id="dAyetAr" lang="ar" dir="rtl"></p>
+      <p class="daily-tr" id="dAyetTr"></p>
+      <span class="daily-ref" id="dAyetRef"></span>
+    </section>
+    <section class="daily-sec" id="dHadisSec">
+      <span class="lbl">Günün hadisi</span>
+      <p class="daily-tr" id="dHadisTr"></p>
+      <span class="daily-ref" id="dHadisRef"></span>
+    </section>
+    <button class="btn primary daily-ok" id="dailyOk" type="button">Okudum</button>
+  </div>
+</dialog>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -1196,6 +1323,102 @@
     renderKpis();
     renderHeat();
     renderLog();
+    renderEda();
+  }
+
+  // Eda edilen gün: her vakitten kılınan en küçük sayı. 7 gün bir hafta, 30 gün bir ay, 365 gün bir yıl.
+  var eda = document.getElementById("eda");
+  var UNITS = [[365, "yıl", "yıllık"], [30, "ay", "aylık"], [7, "hafta", "haftalık"], [1, "gün", "günlük"]];
+  function fullDays() { return Math.min.apply(null, VAKITLER.map(function (v) { return count(v.k); })); }
+  function durText(n) {
+    var parts = [], r = n;
+    UNITS.forEach(function (u) { var q = Math.floor(r / u[0]); if (q) { parts.push([q, u]); r -= q * u[0]; } });
+    parts = parts.slice(0, 2);
+    return parts.map(function (x, i) { return x[0] + " " + x[1][i === parts.length - 1 ? 2 : 1]; }).join(" ");
+  }
+  function isMilestone(n) { return n > 0 && (n % 7 === 0 || n % 30 === 0 || n % 365 === 0); }
+  function renderEda() {
+    var n = fullDays();
+    eda.hidden = n === 0;
+    if (!n) return;
+    document.getElementById("edaBig").textContent = durText(n) + " kaza namazı";
+    document.getElementById("edaDays").textContent = n >= 7 ? n + " gün" : "";
+    var dots = document.getElementById("edaDots");
+    dots.innerHTML = "";
+    VAKITLER.forEach(function (v) {
+      var i = document.createElement("i");
+      if (count(v.k) > n) i.className = "on";
+      i.title = v.ad;
+      dots.appendChild(i);
+    });
+  }
+  function celebrate(n, wasHidden) {
+    eda.classList.remove("rise", "glow");
+    void eda.offsetWidth;
+    if (wasHidden) eda.classList.add("rise");
+    eda.classList.add("glow");
+    setTimeout(function () { eda.classList.remove("rise", "glow"); }, 1600);
+    var big = isMilestone(n);
+    if (big) setTimeout(fireworks, 250);
+    if (navigator.vibrate) { try { navigator.vibrate(big ? [40, 70, 40, 70, 120] : [30, 60, 30]); } catch (e) {} }
+    toast("Elhamdülillah, " + durText(n) + " kaza namazı tamamlandı");
+    if (wasHidden || big) eda.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+
+  // Havai fişek: sadece hafta, ay ve yıl kilometre taşlarında
+  function fireworks() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var cv = document.createElement("canvas");
+    cv.className = "fx";
+    cv.setAttribute("aria-hidden", "true");
+    document.body.appendChild(cv);
+    var W = window.innerWidth, H = window.innerHeight, dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = W * dpr; cv.height = H * dpr;
+    var ctx = cv.getContext("2d");
+    ctx.scale(dpr, dpr);
+    var cs = getComputedStyle(document.documentElement);
+    var cols = ["--band-accent", "--gold", "--turq", "--h2", "--lapis"].map(function (v) { return cs.getPropertyValue(v).trim(); }).concat(["#ffffff"]);
+    var G = 0.3, rockets = [], sparks = [];
+    for (var i = 0; i < 6; i++) {
+      var ty = H * (0.14 + Math.random() * 0.26);
+      rockets.push({ x: W * (0.15 + Math.random() * 0.7), y: H + 10, vx: (Math.random() - 0.5) * 1.2, vy: -Math.sqrt(2 * G * (H + 10 - ty)), wait: i * 12 + Math.random() * 6, c: cols[i % cols.length] });
+    }
+    function burst(r) {
+      var n = 56 + Math.floor(Math.random() * 24);
+      for (var k = 0; k < n; k++) {
+        var a = Math.PI * 2 * k / n + Math.random() * 0.2, sp = 2.2 + Math.random() * 4;
+        sparks.push({ x: r.x, y: r.y, px: r.x, py: r.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 1, decay: 0.011 + Math.random() * 0.012, c: Math.random() < 0.25 ? "#ffffff" : r.c });
+      }
+    }
+    var last = performance.now();
+    function frame(t) {
+      var dt = Math.min(3, (t - last) / 16.67);
+      last = t;
+      ctx.clearRect(0, 0, W, H);
+      ctx.globalCompositeOperation = "lighter";
+      rockets = rockets.filter(function (r) {
+        if (r.wait > 0) { r.wait -= dt; return true; }
+        var ox = r.x, oy = r.y;
+        r.x += r.vx * dt; r.y += r.vy * dt; r.vy += G * dt;
+        ctx.strokeStyle = r.c; ctx.globalAlpha = 0.9; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(ox, oy + 6); ctx.lineTo(r.x, r.y); ctx.stroke();
+        if (r.vy >= 0) { burst(r); return false; }
+        return true;
+      });
+      sparks = sparks.filter(function (p) {
+        p.px = p.x; p.py = p.y;
+        p.vx *= Math.pow(0.975, dt); p.vy = p.vy * Math.pow(0.975, dt) + 0.045 * dt;
+        p.x += p.vx * dt; p.y += p.vy * dt;
+        p.life -= p.decay * dt;
+        if (p.life <= 0) return false;
+        ctx.strokeStyle = p.c; ctx.globalAlpha = p.life; ctx.lineWidth = 2.6;
+        ctx.beginPath(); ctx.moveTo(p.px, p.py); ctx.lineTo(p.x, p.y); ctx.stroke();
+        return true;
+      });
+      if (rockets.length || sparks.length) requestAnimationFrame(frame);
+      else cv.remove();
+    }
+    requestAnimationFrame(frame);
   }
 
   function renderTurUi() {
@@ -1212,10 +1435,12 @@
   }
 
   function add(k) {
+    var daysBefore = fullDays(), edaHidden = eda.hidden;
     state.entries.push({ k: k, t: Date.now() });
     save();
     renderCard(k);
     renderSummary();
+    var daysAfter = fullDays();
     var c = cards[k], n = count(k), tur = state.tur;
     var b = c.beads[(n - 1) % tur];
     if (b) { b.classList.remove("pop"); void b.getBBox(); b.classList.add("pop"); }
@@ -1224,6 +1449,7 @@
       c.ring.classList.remove("pulse"); void c.ring.offsetWidth; c.ring.classList.add("pulse");
       toast(adOf[k] + ": " + (n / tur) + ". tur tamamlandı, Allah kabul etsin");
     }
+    if (daysAfter > daysBefore) celebrate(daysAfter, edaHidden);
   }
 
   function undo(k) {
@@ -1421,6 +1647,7 @@
     var k = dayKey(new Date());
     if (k !== lastDay) { lastDay = k; renderDates(); renderSummary(); renderReading(); refreshPrayer(); }
     else if (ptStatus === "ready") renderTicker();
+    ensureDaily();
   }, 30000);
 
   // Tur ayarı
@@ -1996,6 +2223,113 @@
     renderRdTable(c);
   }
 
+  // ---------- Günün ayeti ve hadisi: günde bir kez, okununca o gün bir daha görünmez ----------
+  // Ayet: Diyanet meali (alquran.cloud). Hadis: Buhârî'nin Türkçe çevirisi (hadith-api).
+  var DAILY_KEY = "kaza-gunluk-v1";
+  var AYETLER = ["2:152", "2:153", "2:186", "2:201", "2:255", "2:286", "3:8", "3:26", "3:92", "3:139", "3:159", "3:173",
+    "3:190", "3:191", "3:200", "6:162", "7:23", "7:55", "7:56", "9:51", "9:129", "11:88", "11:114", "13:28", "14:7",
+    "14:40", "14:41", "16:97", "16:125", "16:128", "17:23", "17:24", "17:80", "18:10", "18:46", "20:14", "20:25",
+    "20:114", "21:87", "22:77", "23:118", "24:35", "25:63", "25:74", "28:24", "29:45", "29:69", "30:21", "31:17",
+    "33:41", "33:56", "35:15", "39:10", "39:53", "40:60", "41:34", "47:7", "49:10", "49:12", "49:13", "50:16", "51:56",
+    "55:13", "57:4", "59:18", "62:10", "64:16", "2:156", "3:134", "66:8", "67:2", "89:27", "89:28", "93:5", "94:5",
+    "94:6", "94:7", "94:8", "103:3", "2:45", "2:238", "4:103", "17:78", "20:130"];
+  var SURELER = ["Fâtiha", "Bakara", "Âl-i İmrân", "Nisâ", "Mâide", "En'âm", "A'râf", "Enfâl", "Tevbe", "Yûnus", "Hûd",
+    "Yûsuf", "Ra'd", "İbrâhîm", "Hicr", "Nahl", "İsrâ", "Kehf", "Meryem", "Tâhâ", "Enbiyâ", "Hac", "Mü'minûn", "Nûr",
+    "Furkân", "Şuarâ", "Neml", "Kasas", "Ankebût", "Rûm", "Lokmân", "Secde", "Ahzâb", "Sebe'", "Fâtır", "Yâsîn",
+    "Sâffât", "Sâd", "Zümer", "Mü'min", "Fussilet", "Şûrâ", "Zuhruf", "Duhân", "Câsiye", "Ahkâf", "Muhammed", "Fetih",
+    "Hucurât", "Kâf", "Zâriyât", "Tûr", "Necm", "Kamer", "Rahmân", "Vâkıa", "Hadîd", "Mücâdele", "Haşr", "Mümtehine",
+    "Saf", "Cuma", "Münâfikûn", "Teğâbün", "Talâk", "Tahrîm", "Mülk", "Kalem", "Hâkka", "Meâric", "Nûh", "Cin",
+    "Müzzemmil", "Müddessir", "Kıyâme", "İnsân", "Mürselât", "Nebe'", "Nâziât", "Abese", "Tekvîr", "İnfitâr",
+    "Mutaffifîn", "İnşikâk", "Burûc", "Târık", "A'lâ", "Gâşiye", "Fecr", "Beled", "Şems", "Leyl", "Duhâ", "İnşirâh",
+    "Tîn", "Alak", "Kadr", "Beyyine", "Zilzâl", "Âdiyât", "Kâria", "Tekâsür", "Asr", "Hümeze", "Fîl", "Kureyş",
+    "Mâûn", "Kevser", "Kâfirûn", "Nasr", "Tebbet", "İhlâs", "Felak", "Nâs"];
+  // Buhârî bölümleri: İman, Edep, Dualar, Rikak (gönlü yumuşatan hadisler)
+  var HADIS_ARALIK = [[8, 58], [5970, 6303], [6304, 6411], [6412, 6593]];
+  var daily = null, dailyBusy = false, dailyTry = 0, curScreen = "cizelge";
+  var dailyBtn = document.getElementById("dailyBtn"), dailyDlg = document.getElementById("dailyDlg");
+
+  function dailyLoad() { try { var r = localStorage.getItem(DAILY_KEY); if (r) daily = JSON.parse(r); } catch (e) {} }
+  function dailySave() { try { localStorage.setItem(DAILY_KEY, JSON.stringify(daily)); } catch (e) {} }
+  function dayNo(d) { return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5); }
+  function getJson(urls) {
+    return fetch(urls[0]).then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .catch(function (e) { return urls.length > 1 ? getJson(urls.slice(1)) : Promise.reject(e); });
+  }
+  function fetchAyet(dn) {
+    var ref = AYETLER[(dn * 5) % AYETLER.length];
+    return getJson(["https://api.alquran.cloud/v1/ayah/" + ref + "/editions/quran-uthmani,tr.diyanet"]).then(function (j) {
+      if (!j || j.code !== 200 || !Array.isArray(j.data) || j.data.length < 2) throw new Error("bad");
+      var tr = j.data[1];
+      return { ar: j.data[0].text, tr: tr.text, ref: (SURELER[tr.surah.number - 1] || tr.surah.englishName) + " Suresi, " + tr.numberInSurah + ". ayet" };
+    });
+  }
+  function hadisNo(seed) {
+    var total = 0;
+    HADIS_ARALIK.forEach(function (a) { total += a[1] - a[0] + 1; });
+    var i = seed % total;
+    for (var k = 0; k < HADIS_ARALIK.length; k++) {
+      var a = HADIS_ARALIK[k], len = a[1] - a[0] + 1;
+      if (i < len) return a[0] + i;
+      i -= len;
+    }
+    return HADIS_ARALIK[0][0];
+  }
+  // Bazı kayıtlara uzun şerh eklenmiş ya da metin yarım kalmış; onlar atlanıp sonrakine bakılır
+  function fetchHadis(seed, tries) {
+    var n = hadisNo(seed), path = "fawazahmed0/hadith-api/1/editions/tur-bukhari/" + n + ".min.json";
+    return getJson(["https://raw.githubusercontent.com/" + path, "https://cdn.jsdelivr.net/gh/" + path.replace("/1/", "@1/")]).then(function (j) {
+      var h = j && j.hadiths && j.hadiths[0];
+      var t = h ? String(h.text || "").replace(/\s+/g, " ").trim() : "";
+      if (t.length < 60 || t.length > 650 || /[:;,]$/.test(t)) throw new Error("uygun değil");
+      return { tr: t, ref: "Buhârî, " + n };
+    }).catch(function (e) { return tries > 1 ? fetchHadis(seed + 97, tries - 1) : Promise.reject(e); });
+  }
+  function ensureDaily() {
+    var today = dayKey(new Date());
+    if (daily && daily.day === today) { renderBubble(); return; }
+    renderBubble();
+    if (dailyBusy || Date.now() - dailyTry < 5 * 60e3) return;
+    dailyBusy = true; dailyTry = Date.now();
+    var dn = dayNo(new Date());
+    Promise.all([fetchAyet(dn), fetchHadis(dn * 131, 6).catch(function () { return null; })])
+      .then(function (r) {
+        if (dayKey(new Date()) !== today) return;
+        daily = { day: today, seen: false, ayet: r[0], hadis: r[1] };
+        dailySave();
+        renderBubble();
+      })
+      .catch(function () {})
+      .then(function () { dailyBusy = false; });
+  }
+  function renderBubble() {
+    var show = !!(daily && daily.day === dayKey(new Date()) && !daily.seen && daily.ayet) && curScreen === "cizelge" && !dailyDlg.open;
+    dailyBtn.hidden = !show;
+  }
+  dailyBtn.addEventListener("click", function () {
+    if (!daily || !daily.ayet) return;
+    document.getElementById("dailyDate").textContent = fmtHead.format(new Date());
+    document.getElementById("dAyetAr").textContent = daily.ayet.ar;
+    document.getElementById("dAyetTr").textContent = daily.ayet.tr;
+    document.getElementById("dAyetRef").textContent = daily.ayet.ref;
+    document.getElementById("dHadisSec").hidden = !daily.hadis;
+    if (daily.hadis) {
+      document.getElementById("dHadisTr").textContent = daily.hadis.tr;
+      document.getElementById("dHadisRef").textContent = daily.hadis.ref;
+    }
+    if (dailyDlg.showModal) dailyDlg.showModal(); else dailyDlg.setAttribute("open", "");
+    dailyBtn.hidden = true;
+  });
+  function closeDaily() { if (dailyDlg.close) dailyDlg.close(); else { dailyDlg.removeAttribute("open"); onDailyClosed(); } }
+  function onDailyClosed() {
+    if (daily && !daily.seen) { daily.seen = true; dailySave(); }
+    renderBubble();
+  }
+  dailyDlg.addEventListener("close", onDailyClosed);
+  dailyDlg.addEventListener("click", function (e) { if (e.target === dailyDlg) closeDaily(); });
+  document.getElementById("dailyClose").addEventListener("click", closeDaily);
+  document.getElementById("dailyOk").addEventListener("click", closeDaily);
+  window.addEventListener("online", function () { dailyTry = 0; ensureDaily(); });
+
   // Ekranlar arası gezinme
   var SCREENS = ["cizelge", "okuma", "ayarlar"];
   var TAB_KEY = "kaza-sekme";
@@ -2009,6 +2343,8 @@
       else b.removeAttribute("aria-current");
     });
     if (name === "cizelge") renderHeat();
+    curScreen = name;
+    renderBubble();
     window.scrollTo(0, 0);
     try { localStorage.setItem(TAB_KEY, name); } catch (e) {}
   }
@@ -2025,7 +2361,9 @@
   refreshPrayer();
   var startTab = (location.hash || "").slice(1);
   if (SCREENS.indexOf(startTab) < 0) { try { startTab = localStorage.getItem(TAB_KEY) || ""; } catch (e) { startTab = ""; } }
+  dailyLoad();
   showScreen(startTab);
+  ensureDaily();
 })();
 </script>
 
