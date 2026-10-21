@@ -1,5 +1,5 @@
 ﻿// Uygulamayı çevrimdışı açılabilir tutar. Dosya değişince CACHE sürümünü artır.
-const CACHE = "kaza-defteri-v10";
+const CACHE = "kaza-defteri-v11";
 const CORE = [
   "./",
   "index.html",
@@ -8,8 +8,8 @@ const CORE = [
   "icons/icon-512.png",
   "icons/apple-touch-icon.png"
 ];
-// Vakit, konum, ayet ve hadis servisleri her zaman ağdan gelir; uygulama kendi önbelleğini tutar
-const NETWORK_ONLY = ["api.aladhan.com", "api.bigdatacloud.net", "api.alquran.cloud", "raw.githubusercontent.com", "cdn.jsdelivr.net"];
+// Vakit ve konum servisleri her zaman ağdan gelir; uygulama kendi önbelleğini tutar
+const NETWORK_ONLY = ["api.aladhan.com", "api.bigdatacloud.net"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(CORE)).then(() => self.skipWaiting()));

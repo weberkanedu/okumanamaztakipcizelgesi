@@ -2224,111 +2224,96 @@
   }
 
   // ---------- Günün ayeti ve hadisi: günde bir kez, okununca o gün bir daha görünmez ----------
-  // Ayet: Diyanet meali (alquran.cloud). Hadis: Buhârî'nin Türkçe çevirisi (hadith-api).
-  var DAILY_KEY = "kaza-gunluk-v1";
-  var AYETLER = ["2:152", "2:153", "2:186", "2:201", "2:255", "2:286", "3:8", "3:26", "3:92", "3:139", "3:159", "3:173",
-    "3:190", "3:191", "3:200", "6:162", "7:23", "7:55", "7:56", "9:51", "9:129", "11:88", "11:114", "13:28", "14:7",
-    "14:40", "14:41", "16:97", "16:125", "16:128", "17:23", "17:24", "17:80", "18:10", "18:46", "20:14", "20:25",
-    "20:114", "21:87", "22:77", "23:118", "24:35", "25:63", "25:74", "28:24", "29:45", "29:69", "30:21", "31:17",
-    "33:41", "33:56", "35:15", "39:10", "39:53", "40:60", "41:34", "47:7", "49:10", "49:12", "49:13", "50:16", "51:56",
-    "55:13", "57:4", "59:18", "62:10", "64:16", "2:156", "3:134", "66:8", "67:2", "89:27", "89:28", "93:5", "94:5",
-    "94:6", "94:7", "94:8", "103:3", "2:45", "2:238", "4:103", "17:78", "20:130"];
-  var SURELER = ["Fâtiha", "Bakara", "Âl-i İmrân", "Nisâ", "Mâide", "En'âm", "A'râf", "Enfâl", "Tevbe", "Yûnus", "Hûd",
-    "Yûsuf", "Ra'd", "İbrâhîm", "Hicr", "Nahl", "İsrâ", "Kehf", "Meryem", "Tâhâ", "Enbiyâ", "Hac", "Mü'minûn", "Nûr",
-    "Furkân", "Şuarâ", "Neml", "Kasas", "Ankebût", "Rûm", "Lokmân", "Secde", "Ahzâb", "Sebe'", "Fâtır", "Yâsîn",
-    "Sâffât", "Sâd", "Zümer", "Mü'min", "Fussilet", "Şûrâ", "Zuhruf", "Duhân", "Câsiye", "Ahkâf", "Muhammed", "Fetih",
-    "Hucurât", "Kâf", "Zâriyât", "Tûr", "Necm", "Kamer", "Rahmân", "Vâkıa", "Hadîd", "Mücâdele", "Haşr", "Mümtehine",
-    "Saf", "Cuma", "Münâfikûn", "Teğâbün", "Talâk", "Tahrîm", "Mülk", "Kalem", "Hâkka", "Meâric", "Nûh", "Cin",
-    "Müzzemmil", "Müddessir", "Kıyâme", "İnsân", "Mürselât", "Nebe'", "Nâziât", "Abese", "Tekvîr", "İnfitâr",
-    "Mutaffifîn", "İnşikâk", "Burûc", "Târık", "A'lâ", "Gâşiye", "Fecr", "Beled", "Şems", "Leyl", "Duhâ", "İnşirâh",
-    "Tîn", "Alak", "Kadr", "Beyyine", "Zilzâl", "Âdiyât", "Kâria", "Tekâsür", "Asr", "Hümeze", "Fîl", "Kureyş",
-    "Mâûn", "Kevser", "Kâfirûn", "Nasr", "Tebbet", "İhlâs", "Felak", "Nâs"];
-  // Buhârî bölümleri: İman, Edep, Dualar, Rikak (gönlü yumuşatan hadisler)
-  var HADIS_ARALIK = [[8, 58], [5970, 6303], [6304, 6411], [6412, 6593]];
-  var daily = null, dailyBusy = false, dailyTry = 0, curScreen = "cizelge";
+  // Veri uygulamayla gelen gunluk.json'da (make-gunluk.mjs üretir): Diyanet meali ve HadeethEnc hadisleri.
+  // Gün telefon saatinden değil sunucunun saatinden belirlenir; okunan günler kalıcı tutulur.
+  // Böylece saati ileri alıp sonraki günü açmak ya da geri alıp okunmuş günü yeniden açmak mümkün olmaz.
+  var DAILY_KEY = "kaza-gunluk-v2";
+  var seenDays = [], gData = null, gBusy = false, curScreen = "cizelge";
+  var srv = null, srvBusy = false; // srv: { base: sunucu ms - performance.now(), at: performance.now() }
   var dailyBtn = document.getElementById("dailyBtn"), dailyDlg = document.getElementById("dailyDlg");
 
-  function dailyLoad() { try { var r = localStorage.getItem(DAILY_KEY); if (r) daily = JSON.parse(r); } catch (e) {} }
-  function dailySave() { try { localStorage.setItem(DAILY_KEY, JSON.stringify(daily)); } catch (e) {} }
-  function dayNo(d) { return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5); }
-  function getJson(urls) {
-    return fetch(urls[0]).then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
-      .catch(function (e) { return urls.length > 1 ? getJson(urls.slice(1)) : Promise.reject(e); });
+  function dailyLoad() {
+    try { var r = JSON.parse(localStorage.getItem(DAILY_KEY) || "null"); if (r && Array.isArray(r.seen)) seenDays = r.seen; } catch (e) {}
   }
-  function fetchAyet(dn) {
-    var ref = AYETLER[(dn * 5) % AYETLER.length];
-    return getJson(["https://api.alquran.cloud/v1/ayah/" + ref + "/editions/quran-uthmani,tr.diyanet"]).then(function (j) {
-      if (!j || j.code !== 200 || !Array.isArray(j.data) || j.data.length < 2) throw new Error("bad");
-      var tr = j.data[1];
-      return { ar: j.data[0].text, tr: tr.text, ref: (SURELER[tr.surah.number - 1] || tr.surah.englishName) + " Suresi, " + tr.numberInSurah + ". ayet" };
-    });
+  function dailySave() { try { localStorage.setItem(DAILY_KEY, JSON.stringify({ seen: seenDays.slice(-400) })); } catch (e) {} }
+  function dayNo(k) { var p = k.split("-"); return Math.floor(Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2])) / 864e5); }
+
+  // Sunucu saati: aynı siteye HEAD isteği (service worker GET dışını önbelleğe almaz) ve Date başlığı.
+  // Aradaki süre telefon saatiyle değil, saat değişikliğinden etkilenmeyen performance.now ile ilerletilir.
+  function checkServer() {
+    if (srvBusy) return;
+    srvBusy = true;
+    fetch("gunluk.json?z=" + Date.now(), { method: "HEAD", cache: "no-store" })
+      .then(function (r) {
+        var t = Date.parse(r.headers.get("Date") || "");
+        if (isNaN(t)) throw new Error("tarih yok");
+        srv = { base: t - performance.now(), at: performance.now() };
+      })
+      .catch(function () { srv = null; })
+      .then(function () { srvBusy = false; renderBubble(); });
   }
-  function hadisNo(seed) {
-    var total = 0;
-    HADIS_ARALIK.forEach(function (a) { total += a[1] - a[0] + 1; });
-    var i = seed % total;
-    for (var k = 0; k < HADIS_ARALIK.length; k++) {
-      var a = HADIS_ARALIK[k], len = a[1] - a[0] + 1;
-      if (i < len) return a[0] + i;
-      i -= len;
-    }
-    return HADIS_ARALIK[0][0];
+  function serverToday() {
+    if (!srv) return null;
+    return dayKey(new Date(srv.base + performance.now()));
   }
-  // Bazı kayıtlara uzun şerh eklenmiş ya da metin yarım kalmış; onlar atlanıp sonrakine bakılır
-  function fetchHadis(seed, tries) {
-    var n = hadisNo(seed), path = "fawazahmed0/hadith-api/1/editions/tur-bukhari/" + n + ".min.json";
-    return getJson(["https://raw.githubusercontent.com/" + path, "https://cdn.jsdelivr.net/gh/" + path.replace("/1/", "@1/")]).then(function (j) {
-      var h = j && j.hadiths && j.hadiths[0];
-      var t = h ? String(h.text || "").replace(/\s+/g, " ").trim() : "";
-      if (t.length < 60 || t.length > 650 || /[:;,]$/.test(t)) throw new Error("uygun değil");
-      return { tr: t, ref: "Buhârî, " + n };
-    }).catch(function (e) { return tries > 1 ? fetchHadis(seed + 97, tries - 1) : Promise.reject(e); });
+  function loadData() {
+    if (gData || gBusy) return;
+    gBusy = true;
+    fetch("gunluk.json").then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .then(function (d) { if (d && Array.isArray(d.ayetler) && d.ayetler.length && Array.isArray(d.hadisler)) gData = d; })
+      .catch(function () {})
+      .then(function () { gBusy = false; renderBubble(); });
+  }
+  // Liste sırası tekrara düşmeden dolaşılsın diye günü listeye aralarında asal bir adımla dağıtır
+  function pick(list, dn, salt) {
+    var n = list.length, step = Math.max(1, Math.round(n * 0.618));
+    function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+    while (gcd(step, n) !== 1) step++;
+    return list[((dn + salt) * step) % n];
   }
   function ensureDaily() {
-    var today = dayKey(new Date());
-    if (daily && daily.day === today) { renderBubble(); return; }
+    loadData();
+    // Sunucu saati 10 dakikada bir tazelenir; bağlantı yoksa baloncuk görünmez
+    if (!srv || performance.now() - srv.at > 10 * 60e3) checkServer();
     renderBubble();
-    if (dailyBusy || Date.now() - dailyTry < 5 * 60e3) return;
-    dailyBusy = true; dailyTry = Date.now();
-    var dn = dayNo(new Date());
-    Promise.all([fetchAyet(dn), fetchHadis(dn * 131, 6).catch(function () { return null; })])
-      .then(function (r) {
-        if (dayKey(new Date()) !== today) return;
-        daily = { day: today, seen: false, ayet: r[0], hadis: r[1] };
-        dailySave();
-        renderBubble();
-      })
-      .catch(function () {})
-      .then(function () { dailyBusy = false; });
   }
   function renderBubble() {
-    var show = !!(daily && daily.day === dayKey(new Date()) && !daily.seen && daily.ayet) && curScreen === "cizelge" && !dailyDlg.open;
+    var day = serverToday();
+    var show = !!(day && gData && seenDays.indexOf(day) < 0) && curScreen === "cizelge" && !dailyDlg.open;
     dailyBtn.hidden = !show;
   }
+  var openDay = null;
   dailyBtn.addEventListener("click", function () {
-    if (!daily || !daily.ayet) return;
-    document.getElementById("dailyDate").textContent = fmtHead.format(new Date());
-    document.getElementById("dAyetAr").textContent = daily.ayet.ar;
-    document.getElementById("dAyetTr").textContent = daily.ayet.tr;
-    document.getElementById("dAyetRef").textContent = daily.ayet.ref;
-    document.getElementById("dHadisSec").hidden = !daily.hadis;
-    if (daily.hadis) {
-      document.getElementById("dHadisTr").textContent = daily.hadis.tr;
-      document.getElementById("dHadisRef").textContent = daily.hadis.ref;
+    var day = serverToday();
+    if (!day || !gData) return;
+    openDay = day;
+    var dn = dayNo(day), ay = pick(gData.ayetler, dn, 0), hd = gData.hadisler.length ? pick(gData.hadisler, dn, 7) : null;
+    var p = day.split("-");
+    document.getElementById("dailyDate").textContent = fmtHead.format(new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2])));
+    document.getElementById("dAyetAr").textContent = ay.ar;
+    document.getElementById("dAyetTr").textContent = ay.tr;
+    document.getElementById("dAyetRef").textContent = ay.ref + " · Diyanet İşleri meali";
+    document.getElementById("dHadisSec").hidden = !hd;
+    if (hd) {
+      document.getElementById("dHadisTr").textContent = hd.tr;
+      document.getElementById("dHadisRef").textContent = [hd.ref, hd.grade].filter(Boolean).join(" · ");
     }
     if (dailyDlg.showModal) dailyDlg.showModal(); else dailyDlg.setAttribute("open", "");
     dailyBtn.hidden = true;
   });
   function closeDaily() { if (dailyDlg.close) dailyDlg.close(); else { dailyDlg.removeAttribute("open"); onDailyClosed(); } }
   function onDailyClosed() {
-    if (daily && !daily.seen) { daily.seen = true; dailySave(); }
+    if (openDay && seenDays.indexOf(openDay) < 0) { seenDays.push(openDay); dailySave(); }
+    openDay = null;
     renderBubble();
   }
   dailyDlg.addEventListener("close", onDailyClosed);
   dailyDlg.addEventListener("click", function (e) { if (e.target === dailyDlg) closeDaily(); });
   document.getElementById("dailyClose").addEventListener("click", closeDaily);
   document.getElementById("dailyOk").addEventListener("click", closeDaily);
-  window.addEventListener("online", function () { dailyTry = 0; ensureDaily(); });
+  window.addEventListener("online", checkServer);
+  // Uygulama arka plandan dönünce sunucu saatine yeniden bakılır
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) checkServer(); });
 
   // Ekranlar arası gezinme
   var SCREENS = ["cizelge", "okuma", "ayarlar"];
