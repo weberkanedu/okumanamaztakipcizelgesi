@@ -1,5 +1,5 @@
 ﻿// Uygulamayı çevrimdışı açılabilir tutar. Dosya değişince CACHE sürümünü artır.
-const CACHE = "kaza-defteri-v11";
+const CACHE = "kaza-defteri-v12";
 const CORE = [
   "./",
   "index.html",
@@ -33,8 +33,11 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put("index.html", copy));
+          // Sadece başarılı yanıt saklanır; sunucu bir an hata verirse uygulama bozulmaz
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put("index.html", copy));
+          }
           return res;
         })
         .catch(() => caches.match("index.html"))

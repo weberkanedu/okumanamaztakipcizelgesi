@@ -1,4 +1,4 @@
-// Günün ayeti ve hadisi verisini üretir: node make-gunluk.mjs  →  gunluk.json
+// Günün ayeti ve hadisi verisini üretir: node make-gunluk.mjs  →  public/gunluk.json
 // Ayet: Diyanet İşleri Kur'an-ı Kerim Türkçe Meali (acikkuran.com, çevirmen adı belirtilerek alıntı serbest).
 // Hadis: Tercüme Edilmiş Nebevi Hadisler Ansiklopedisi (hadeethenc.com), "Faziletler ve Adaplar" ile
 // "Kur'an'ın Faziletleri" bölümleri; sadece sahih/hasen ve kısa olanlar.
@@ -111,5 +111,5 @@ for (const cat of HADIS_KATEGORI) {
   }
 }
 
-writeFileSync(new URL("./gunluk.json", import.meta.url), JSON.stringify({ v: 1, ayetler, hadisler }));
+writeFileSync(new URL("./public/gunluk.json", import.meta.url), JSON.stringify({ v: 1, ayetler, hadisler }));
 console.log(`gunluk.json: ${ayetler.length} ayet, ${hadisler.length} hadis`);

@@ -1,6 +1,6 @@
-# Uygulama ikonlarını (lacivert zemin, 10 taneli tesbih, ortada onay işareti) PNG olarak üretir.
+﻿# Uygulama ikonlarını (lacivert zemin, 10 taneli tesbih, ortada onay işareti) PNG olarak üretir.
 Add-Type -AssemblyName System.Drawing
-$dir = Join-Path $PSScriptRoot 'icons'
+$dir = Join-Path $PSScriptRoot 'public\icons'
 New-Item -ItemType Directory -Force $dir | Out-Null
 
 function New-Icon([int]$size, [string]$name) {

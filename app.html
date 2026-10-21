@@ -271,7 +271,7 @@
   .tk-track { position: relative; overflow: hidden; display: flex; align-items: center; min-width: 0; flex: 1 1 auto; }
   .tk-run { display: inline-flex; align-items: center; gap: 26px; padding: 0 14px; white-space: nowrap; font-size: 14px; }
   .tk-run.anim { animation: marquee var(--tk-dur, 40s) linear infinite; }
-  .ticker:hover .tk-run.anim, .ticker:focus-within .tk-run.anim { animation-play-state: paused; }
+  .ticker:hover .tk-run.anim, .ticker:focus-within .tk-run.anim, .ticker.paused .tk-run.anim { animation-play-state: paused; }
   .tk-item { font-variant-numeric: tabular-nums; }
   .tk-item b { font-weight: 700; color: var(--band-muted); margin-right: 6px; }
   .tk-item.past { opacity: .55; }
@@ -293,6 +293,17 @@
     font: inherit; color: var(--ink); background: var(--bg);
     border: 1px solid var(--line); border-radius: 10px;
   }
+
+  /* Yedek hatırlatıcısı */
+  .bk-note {
+    display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 12px; align-items: center;
+    padding: 12px 14px; border-radius: 14px; border: 1px solid var(--gold); background: var(--gold-soft);
+  }
+  .bk-note svg { width: 24px; height: 24px; color: var(--gold); }
+  .bk-txt { display: grid; gap: 1px; min-width: 0; font-size: 13px; color: var(--muted); }
+  .bk-txt b { font-size: 14px; color: var(--ink); }
+  .bk-acts { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
+  @media (min-width: 560px) { .bk-note { grid-template-columns: auto minmax(0, 1fr) auto; } .bk-acts { grid-column: auto; } }
 
   /* Gösterge kutuları */
   /* Tek satırlık gösterge şeridi */
@@ -454,7 +465,7 @@
   .bubble::after {
     content: ""; position: absolute; inset: -5px; border-radius: 50%;
     border: 2px solid var(--band-accent); opacity: 0;
-    animation: bubbleRing 2.4s ease-out infinite;
+    animation: bubbleRing 2.4s ease-out 3;
   }
   .bubble svg { width: 24px; height: 24px; }
   @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
@@ -640,6 +651,12 @@
       <span class="h" id="dateH"></span>
     </div>
   </header>
+
+  <div class="bk-note" id="bkNote" role="status" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+    <div class="bk-txt"><b id="bkTitle"></b><span id="bkSub"></span></div>
+    <div class="bk-acts"><button class="btn primary" id="bkNow" type="button">Yedek al</button><button class="btn" id="bkLater" type="button">Sonra</button></div>
+  </div>
 
   <section class="kpis" aria-label="Özet">
     <div class="kpi">
@@ -1051,11 +1068,7 @@
     catch (e) { if (!warned) { warned = true; toast("Kayıt bu tarayıcıda saklanamıyor. Yedek dosyası almayı unutma."); } }
   }
 
-  function count(k) {
-    var n = 0;
-    for (var i = 0; i < state.entries.length; i++) if (state.entries[i].k === k) n++;
-    return n;
-  }
+  function count(k) { return counts[k] || 0; }
 
   // Kartlar
   var grid = document.getElementById("grid");
@@ -1141,16 +1154,20 @@
     c.undo.disabled = n === 0;
   }
 
-  // Günlük sayımlar
-  var dayMap = {};
+  // Vakit ve gün başına sayılar tek geçişte hesaplanır; ekleme ve geri almada sadece ilgili sayı değişir
+  var counts = {}, dayMap = {};
+  function tally(e, d) {
+    counts[e.k] = (counts[e.k] || 0) + d;
+    var k = dayKey(new Date(e.t));
+    var o = dayMap[k] || (dayMap[k] = { n: 0, by: {} });
+    o.n += d;
+    o.by[e.k] = (o.by[e.k] || 0) + d;
+    if (o.n <= 0) delete dayMap[k];
+    else if (o.by[e.k] <= 0) delete o.by[e.k];
+  }
   function buildDayMap() {
-    dayMap = {};
-    state.entries.forEach(function (e) {
-      var k = dayKey(new Date(e.t));
-      var o = dayMap[k] || (dayMap[k] = { n: 0, by: {} });
-      o.n++;
-      o.by[e.k] = (o.by[e.k] || 0) + 1;
-    });
+    counts = {}; dayMap = {};
+    state.entries.forEach(function (e) { tally(e, 1); });
   }
   function dayCount(d) { var o = dayMap[dayKey(d)]; return o ? o.n : 0; }
   function level(n) { return n === 0 ? 0 : n <= 2 ? 1 : n <= 5 ? 2 : n <= 9 ? 3 : 4; }
@@ -1297,8 +1314,8 @@
     document.getElementById("logEmpty").hidden = last.length > 0;
   }
 
-  function renderSummary() {
-    buildDayMap();
+  function renderSummary(rebuild) {
+    if (rebuild !== false) buildDayMap();
     renderKpis();
     renderHeat();
     renderLog();
@@ -1408,17 +1425,20 @@
   }
 
   function renderAll() {
+    buildDayMap();
     VAKITLER.forEach(function (v) { buildRing(cards[v.k]); renderCard(v.k); });
-    renderSummary();
+    renderSummary(false);
     renderTurUi();
   }
 
   function add(k) {
     var daysBefore = fullDays(), edaHidden = eda.hidden;
-    state.entries.push({ k: k, t: Date.now() });
+    var e = { k: k, t: Date.now() };
+    state.entries.push(e);
+    tally(e, 1);
     save();
     renderCard(k);
-    renderSummary();
+    renderSummary(false);
     var daysAfter = fullDays();
     var c = cards[k], n = count(k), tur = state.tur;
     var b = c.beads[(n - 1) % tur];
@@ -1434,10 +1454,10 @@
   function undo(k) {
     for (var i = state.entries.length - 1; i >= 0; i--) {
       if (state.entries[i].k === k) {
-        state.entries.splice(i, 1);
+        tally(state.entries.splice(i, 1)[0], -1);
         save();
         renderCard(k);
-        renderSummary();
+        renderSummary(false);
         toast(adOf[k] + ": son kayıt geri alındı");
         return;
       }
@@ -1474,7 +1494,7 @@
       j.data.forEach(function (it) {
         var g = it.date.gregorian.date.split("-"); // gg-aa-yyyy
         var t = it.timings;
-        var clean = function (s) { return String(s).slice(0, 5); };
+        var clean = function (s) { var v = String(s).slice(0, 5); if (!/^\d\d:\d\d$/.test(v)) throw new Error("saat"); return v; };
         days[g[2] + "-" + g[1] + "-" + g[0]] = {
           imsak: clean(t.Fajr), gunes: clean(t.Sunrise), ogle: clean(t.Dhuhr),
           ikindi: clean(t.Asr), aksam: clean(t.Maghrib), yatsi: clean(t.Isha),
@@ -1558,7 +1578,8 @@
 
   tkRun.addEventListener("click", function (e) {
     var b = e.target.closest ? e.target.closest("[data-act]") : null;
-    if (!b) return;
+    // Vakitler akarken banda dokunmak durdurur, tekrar dokunmak devam ettirir
+    if (!b) { if (tkRun.classList.contains("anim")) tkRun.parentNode.parentNode.classList.toggle("paused"); return; }
     var act = b.getAttribute("data-act");
     if (act === "geo") useGeo();
     else if (act === "retry") refreshPrayer();
@@ -1579,7 +1600,8 @@
     if (!navigator.geolocation) { ptStatus = "error"; ptMsg = "Bu cihazda konum kullanılamıyor. Şehrini yazabilirsin."; renderTicker(); toast(ptMsg); return; }
     ptStatus = "loading"; renderTicker();
     navigator.geolocation.getCurrentPosition(function (pos) {
-      var lat = pos.coords.latitude.toFixed(3), lng = pos.coords.longitude.toFixed(3);
+      // Namaz vakti için ~1 km hassasiyet yeter; servislere daha hassas konum gönderilmez
+      var lat = pos.coords.latitude.toFixed(2), lng = pos.coords.longitude.toFixed(2);
       var loc = { type: "geo", lat: lat, lng: lng };
       fetch("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=" + lat + "&longitude=" + lng + "&localityLanguage=tr")
         .then(function (r) { return r.json(); })
@@ -1624,7 +1646,7 @@
   var lastDay = dayKey(new Date());
   setInterval(function () {
     var k = dayKey(new Date());
-    if (k !== lastDay) { lastDay = k; renderDates(); renderSummary(); renderReading(); refreshPrayer(); }
+    if (k !== lastDay) { lastDay = k; renderDates(); renderSummary(); renderReading(); renderBackupNote(); refreshPrayer(); }
     else if (ptStatus === "ready") renderTicker();
     ensureDaily();
   }, 30000);
@@ -1648,6 +1670,35 @@
   document.getElementById("turSave").addEventListener("click", saveTurInput);
   turInput.addEventListener("keydown", function (e) { if (e.key === "Enter") saveTurInput(); });
 
+  // Yedek hatırlatıcısı: kayıtlar sadece bu tarayıcıda; son yedekten 14 gün geçince çizelgede hatırlatılır
+  var BK_KEY = "kaza-yedek-v1", BK_DAYS = 14;
+  var bk = { last: 0, count: 0, snooze: 0 };
+  try { var bkr = JSON.parse(localStorage.getItem(BK_KEY) || "null"); if (bkr && typeof bkr.last === "number") bk = bkr; } catch (e) {}
+  function bkSave() { try { localStorage.setItem(BK_KEY, JSON.stringify(bk)); } catch (e) {} }
+  function rdLogCount() { var n = 0; rd.items.forEach(function (it) { n += it.logs.length; }); return n; }
+  function backupDone() {
+    bk.last = Date.now(); bk.count = state.entries.length + rdLogCount(); bk.snooze = 0;
+    bkSave(); renderBackupNote();
+  }
+  function renderBackupNote() {
+    var el = document.getElementById("bkNote");
+    var total = state.entries.length + rdLogCount();
+    var first = state.entries.length ? state.entries[0].t : 0;
+    var since = bk.last || first;
+    var due = total > 0 && since && Date.now() - since > BK_DAYS * 864e5 && Date.now() > bk.snooze && total > bk.count;
+    el.hidden = !due;
+    if (!due) return;
+    var days = Math.floor((Date.now() - since) / 864e5);
+    document.getElementById("bkTitle").textContent = bk.last ? "Son yedek " + days + " gün önce" : "Henüz yedek almadın";
+    document.getElementById("bkSub").textContent = (bk.last ? "O günden beri " + (total - bk.count) + " kayıt eklendi." : total + " kayıt sadece bu telefonda duruyor.") + " Telefon değişirse ya da tarayıcı temizlenirse kaybolur.";
+  }
+  document.getElementById("bkNow").addEventListener("click", function () { document.getElementById("exportFileBtn").click(); });
+  document.getElementById("bkLater").addEventListener("click", function () { bk.snooze = Date.now() + 3 * 864e5; bkSave(); renderBackupNote(); });
+  // Tarayıcıdan kayıtların kendiliğinden silinmemesini iste (izin verilmezse sessizce geçilir)
+  if (navigator.storage && navigator.storage.persist) {
+    try { navigator.storage.persisted().then(function (p) { if (!p) return navigator.storage.persist(); }).catch(function () {}); } catch (e) {}
+  }
+
   // Yedek: dışarı aktar
   function backupJson() {
     return JSON.stringify({ app: "kaza-defteri", v: 3, tur: state.tur, exportedAt: new Date().toISOString(), entries: state.entries, okuma: rd });
@@ -1663,6 +1714,7 @@
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
     toast("Yedek dosyası indirildi: " + name);
+    backupDone();
   }
   function exportPlain() {
     var name = backupName();
@@ -1673,7 +1725,7 @@
     // Telefonda paylaşım menüsü açılır: Dosyalar'a kaydet, Drive, WhatsApp vb.
     if (touch && file && navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ files: [file], title: "Kaza takip yedeği" })
-        .then(function () { toast("Yedek dosyası paylaşıldı"); })
+        .then(function () { toast("Yedek dosyası paylaşıldı"); backupDone(); })
         .catch(function (err) { if (!err || err.name !== "AbortError") download(blob, name); });
     } else {
       download(blob, name);
@@ -1685,7 +1737,7 @@
       window.claude.use("downloads").then(function (dl) {
         if (!dl) { exportPlain(); return; }
         dl.save({ filename: backupName(), data: backupJson() })
-          .then(function () { toast("Yedek dosyası kaydedildi"); })
+          .then(function () { toast("Yedek dosyası kaydedildi"); backupDone(); })
           .catch(function (err) { if (!err || err.code !== "declined") toast("Dosya kaydedilemedi. Metinle yedeklemeyi kullan."); });
       });
       return;
@@ -1743,7 +1795,7 @@
     exportBox.hidden = false;
     function fallback() { exportBox.focus(); exportBox.select(); toast("Metin seçildi, kopyalayabilirsin"); }
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function () { toast("Yedek metni kopyalandı"); }, fallback);
+      navigator.clipboard.writeText(text).then(function () { toast("Yedek metni kopyalandı"); backupDone(); }, fallback);
     } else { fallback(); }
   });
   document.getElementById("importTextBtn").addEventListener("click", function () {
@@ -2322,6 +2374,7 @@
   renderDates();
   renderAll();
   renderReading();
+  renderBackupNote();
   refreshPrayer();
   var startTab = (location.hash || "").slice(1);
   if (SCREENS.indexOf(startTab) < 0) { try { startTab = localStorage.getItem(TAB_KEY) || ""; } catch (e) { startTab = ""; } }
