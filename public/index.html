@@ -161,6 +161,8 @@
   .form-grid .wide { grid-column: 1 / -1; }
   .field { display: grid; gap: 4px; font-size: 12px; font-weight: 700; color: var(--muted); min-width: 0; }
   .field .text-input { width: 100%; }
+  .field-pair { display: flex; gap: 8px; }
+  .field-pair select.text-input { flex: 0 0 auto; width: auto; }
   .calc { margin: 0; font-size: 14px; }
   .calc b { font-family: var(--f-display); font-size: 18px; color: var(--gold); }
   .rd-hero {
@@ -179,6 +181,8 @@
   .rd-sub { font-size: 13px; color: var(--band-muted); font-weight: 600; }
   .rd-where { margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--band-line); font-size: 14px; font-weight: 700; color: var(--band-fg); font-variant-numeric: tabular-nums; }
   .rd-where b { color: var(--band-accent); }
+  .rd-replan { margin-top: 6px; font-size: 14px; font-weight: 700; color: var(--band-fg); }
+  .rd-replan b { color: var(--band-accent); }
   .rd-card .where { font-size: 13px; font-weight: 700; color: var(--lapis); font-variant-numeric: tabular-nums; }
   .rd-prog-head { display: flex; justify-content: space-between; align-items: baseline; font-variant-numeric: tabular-nums; }
   .rd-prog-head b { font-family: var(--f-display); font-size: 22px; }
@@ -330,14 +334,7 @@
   }
   .debt-cta svg { width: 18px; height: 18px; color: var(--gold); }
 
-  /* Bir günlük kaza düğmesi ve geride kalan vakit rozeti */
-  .day-btn {
-    min-height: 48px; border: 1.5px solid var(--lapis); border-radius: 12px; background: transparent;
-    color: var(--lapis); font-weight: 800; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  }
-  .day-btn svg { width: 18px; height: 18px; }
-  .day-btn small { font-weight: 600; font-size: 12px; color: var(--muted); }
-  .day-btn.undoing { border-color: var(--gold); color: var(--gold); }
+  /* Geride kalan vakit rozeti */
   .lag { font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 999px; background: var(--gold-soft); color: var(--gold); white-space: nowrap; }
   .card.lagging { border-color: var(--gold); }
 
@@ -744,11 +741,6 @@
     Kaç yıllık kazam var? Hesapla
   </button>
 
-  <button class="day-btn" id="dayBtn" type="button">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12.5l3.5 3.5L13 9.5"/><path d="M11 15.5l1 1L21 7.5"/></svg>
-    <span id="dayBtnTxt">1 günü kıldım</span><small id="dayBtnSub">6 vakit birden</small>
-  </button>
-
   <section class="grid" id="grid" aria-label="Vakitler"></section>
 
   <section class="eda" id="eda" aria-live="polite" hidden>
@@ -843,8 +835,9 @@
       <div class="form-grid">
         <label class="field wide">Ne okuyacaksın?<input class="text-input" id="rdName" type="text" placeholder="örn. Kur'an-ı Kerim, Riyazü's-Salihin"></label>
         <label class="field">Toplam sayfa<input class="text-input" id="rdTotal" type="number" inputmode="numeric" min="1" placeholder="604"></label>
-        <label class="field">Kaç günde?<input class="text-input" id="rdDays" type="number" inputmode="numeric" min="1" placeholder="30"></label>
-        <label class="field wide date-field">Başlangıç tarihi<input class="text-input" id="rdStartDate" type="date"></label>
+        <label class="field">Daha önce okuduğun<input class="text-input" id="rdPre" type="number" inputmode="numeric" min="0" placeholder="0 sayfa"></label>
+        <label class="field date-field">Başlangıç<input class="text-input" id="rdStartDate" type="date"></label>
+        <label class="field date-field">Bitiş<input class="text-input" id="rdEndDate" type="date"></label>
       </div>
       <p class="calc" id="rdPreview"></p>
       <div class="row">
@@ -873,6 +866,7 @@
       </div>
       <div class="rd-big"><span id="rdTodayLeft">0</span><small id="rdTodayUnit">sayfa</small></div>
       <span class="rd-sub" id="rdTodaySub"></span>
+      <span class="rd-replan" id="rdReplan" hidden></span>
       <span class="rd-where" id="rdWhere"></span>
     </div>
 
@@ -952,11 +946,17 @@
 
   <h3 class="grp" id="debtSettings">Kaza borcu</h3>
   <div class="sheet">
-      <p class="hint">Kılınmamış namazların tahmini sayısı. Namaz borcunun başladığı yaştan düzenli kılmaya başladığın yaşa kadar her gün, bir günlük kaza (vitr dahil 6 vakit) sayılır. Sonuç bir tahmindir; çizelgede kaza borcu kartında görünür.</p>
+      <p class="hint">Kılınmamış namazların tahmini sayısı. Namaz borcunun başladığı yaştan düzenli kılmaya başladığın yaşa kadar her gün, bir günlük kaza (vitr dahil 6 vakit) sayılır. Daha önce kıldığın kazaları da yazarsan borçtan düşülür. Sonuç bir tahmindir; çizelgede kaza borcu kartında görünür.</p>
       <div class="form-grid">
         <label class="field">Borcun başladığı yaş<input class="text-input" id="dbStart" type="number" inputmode="numeric" min="7" max="20" placeholder="örn. 12"></label>
         <label class="field">Düzenli kılmaya başladığın yaş<input class="text-input" id="dbEnd" type="number" inputmode="numeric" min="7" max="100" placeholder="örn. 22"></label>
         <label class="field wide">Ayda düşülecek gün (hanımlar için özel hal günleri)<input class="text-input" id="dbOff" type="number" inputmode="numeric" min="0" max="15" placeholder="0"></label>
+        <div class="field wide"><label for="dbPre">Bu uygulamadan önce kıldığın kaza</label>
+          <div class="field-pair">
+            <input class="text-input" id="dbPre" type="number" inputmode="numeric" min="0" placeholder="0">
+            <select class="text-input" id="dbPreUnit" aria-label="Birim"><option value="1">gün</option><option value="30">ay</option><option value="365">yıl</option></select>
+          </div>
+        </div>
       </div>
       <p class="calc" id="dbPreview"></p>
       <div class="row">
@@ -1119,13 +1119,15 @@
 
   function validBorc(b) {
     return b && typeof b.s === "number" && typeof b.e === "number" && typeof b.off === "number" &&
-      b.s >= 7 && b.s <= 20 && b.e > b.s && b.e <= 100 && b.off >= 0 && b.off <= 15;
+      b.s >= 7 && b.s <= 20 && b.e > b.s && b.e <= 100 && b.off >= 0 && b.off <= 15 &&
+      (b.pre === undefined || (typeof b.pre === "number" && b.pre % 1 === 0 && b.pre >= 0 && b.pre <= 36500));
   }
   function validTur(t) { return typeof t === "number" && t % 1 === 0 && t >= 1 && t <= TUR_MAX; }
   function validLogs(a) { return Array.isArray(a) && a.every(function (l) { return l && typeof l.t === "number" && typeof l.p === "number"; }); }
   function validItem(it) {
     return it && typeof it.name === "string" && typeof it.total === "number" && it.total >= 1 &&
-      typeof it.days === "number" && it.days >= 1 && /^\d{4}-\d{2}-\d{2}$/.test(it.start) && validLogs(it.logs);
+      typeof it.days === "number" && it.days >= 1 && /^\d{4}-\d{2}-\d{2}$/.test(it.start) && validLogs(it.logs) &&
+      (it.pre === undefined || (typeof it.pre === "number" && it.pre % 1 === 0 && it.pre >= 0 && it.pre < it.total));
   }
   // Yeni biçim {items:[...]}; eski tek hedefli biçim {goal, logs} de kabul edilir
   function validRd(o) {
@@ -1442,11 +1444,13 @@
   }
   // Kaza borcu: yaşlardan tahmini gün sayısı; hız son 30 günün kayıtlarından
   function yearsText(days) {
-    var y = Math.floor(days / 365), m = Math.floor((days % 365) / 30);
-    var t = (y ? y + " yıl" : "") + (y && m ? " " : "") + (m ? m + " ay" : "");
-    return t || days + " gün";
+    var y = Math.floor(days / 365), m = Math.floor((days % 365) / 30), d = days % 365 % 30;
+    var t = [y ? y + " yıl" : "", m ? m + " ay" : "", d ? d + " gün" : ""].filter(Boolean).join(" ");
+    return t || "0 gün";
   }
   function debtDays(b) { var years = b.e - b.s; return Math.max(0, Math.round(years * 365 - years * 12 * b.off)); }
+  // Uygulamadan önce kılınmış kaza (gün) eda edilenlere eklenir
+  function preDays(b) { return b && b.pre ? b.pre : 0; }
   var fmtMonthYear = dtf({ month: "long", year: "numeric" });
   function recentPace() {
     var n = state.entries.length;
@@ -1461,7 +1465,7 @@
     box.hidden = !b;
     document.getElementById("debtCta").hidden = !!b;
     if (!b) return;
-    var total = debtDays(b), done = fullDays(), left = Math.max(0, total - done);
+    var pre = preDays(b), total = debtDays(b), done = fullDays() + pre, left = Math.max(0, total - done);
     var pct = total ? Math.min(100, done / total * 100) : 100;
     document.getElementById("debtBig").textContent = left ? yearsText(left) + " kaldı" : "Borç tamamlandı";
     document.getElementById("debtBar").style.width = Math.max(pct, done ? 2 : 0) + "%";
@@ -1486,30 +1490,40 @@
   document.getElementById("debtCta").addEventListener("click", goDebtSettings);
   document.getElementById("debtEdit").addEventListener("click", goDebtSettings);
   function dbRead() {
-    return { s: Number(document.getElementById("dbStart").value), e: Number(document.getElementById("dbEnd").value), off: Number(document.getElementById("dbOff").value || 0) };
+    var pre = Number(document.getElementById("dbPre").value || 0) * Number(document.getElementById("dbPreUnit").value);
+    return { s: Number(document.getElementById("dbStart").value), e: Number(document.getElementById("dbEnd").value), off: Number(document.getElementById("dbOff").value || 0), pre: pre };
   }
   function dbFill() {
     var b = state.borc;
     document.getElementById("dbStart").value = b ? b.s : "";
     document.getElementById("dbEnd").value = b ? b.e : "";
     document.getElementById("dbOff").value = b && b.off ? b.off : "";
+    var pre = preDays(b), unit = pre && pre % 365 === 0 ? 365 : pre && pre % 30 === 0 ? 30 : 1;
+    document.getElementById("dbPre").value = pre ? pre / unit : "";
+    document.getElementById("dbPreUnit").value = String(unit);
     document.getElementById("dbClear").hidden = !b;
     dbPreview();
   }
   function dbPreview() {
     var b = dbRead(), p = document.getElementById("dbPreview");
     if (!document.getElementById("dbStart").value || !document.getElementById("dbEnd").value) { p.textContent = "İki yaşı yazınca tahmini borç burada görünür."; return; }
-    if (!validBorc(b)) { p.textContent = "Başlangıç yaşı 7 ile 20 arasında, düzenli kılmaya başladığın yaş ondan büyük olmalı. Ayda düşülecek gün en fazla 15."; return; }
+    if (!validBorc(b)) { p.textContent = "Başlangıç yaşı 7 ile 20 arasında, düzenli kılmaya başladığın yaş ondan büyük olmalı. Ayda düşülecek gün en fazla 15. Önceden kılınan kaza tam sayı olmalı."; return; }
     var d = debtDays(b);
     p.innerHTML = "";
     p.appendChild(document.createTextNode("Tahmini borç: "));
     var bb = document.createElement("b"); bb.textContent = yearsText(d); p.appendChild(bb);
     p.appendChild(document.createTextNode(" · " + d.toLocaleString("tr-TR") + " gün · " + (d * 6).toLocaleString("tr-TR") + " namaz"));
+    if (b.pre) {
+      var left = Math.max(0, d - b.pre);
+      p.appendChild(document.createTextNode(". Önceden kıldığın " + yearsText(b.pre) + " düşülünce kalan: "));
+      var bl = document.createElement("b"); bl.textContent = left ? yearsText(left) : "borç yok"; p.appendChild(bl);
+    }
   }
-  ["dbStart", "dbEnd", "dbOff"].forEach(function (id) { document.getElementById(id).addEventListener("input", dbPreview); });
+  ["dbStart", "dbEnd", "dbOff", "dbPre", "dbPreUnit"].forEach(function (id) { document.getElementById(id).addEventListener("input", dbPreview); });
   document.getElementById("dbSave").addEventListener("click", function () {
     var b = dbRead();
-    if (!validBorc(b)) { dbPreview(); toast("Yaşları kontrol et."); return; }
+    if (!validBorc(b)) { dbPreview(); toast("Yaşları ve önceden kılınan kazayı kontrol et."); return; }
+    if (!b.pre) delete b.pre;
     state.borc = b; save(); renderDebt(); dbFill();
     toast("Kaza borcu kaydedildi: " + yearsText(debtDays(b)));
   });
@@ -1536,43 +1550,6 @@
       }
     });
   }
-
-  // Bir günlük kaza: altı vakti birden ekler; yanlış dokunuşa karşı 6 saniye geri alınabilir
-  var dayBtn = document.getElementById("dayBtn"), dayUndo = null, dayTimer = null;
-  function dayBtnReset() {
-    clearTimeout(dayTimer); dayUndo = null;
-    dayBtn.classList.remove("undoing");
-    document.getElementById("dayBtnTxt").textContent = "1 günü kıldım";
-    document.getElementById("dayBtnSub").textContent = "6 vakit birden";
-  }
-  dayBtn.addEventListener("click", function () {
-    if (dayUndo) {
-      dayUndo.forEach(function (e) { var i = state.entries.lastIndexOf(e); if (i >= 0) { state.entries.splice(i, 1); tally(e, -1); } });
-      save();
-      VAKITLER.forEach(function (v) { renderCard(v.k); });
-      renderSummary(false);
-      dayBtnReset();
-      toast("Bir günlük kaza geri alındı");
-      return;
-    }
-    var before = fullDays(), wasHidden = eda.hidden, t = Date.now();
-    var added = VAKITLER.map(function (v) { return { k: v.k, t: t }; });
-    added.forEach(function (e) { state.entries.push(e); tally(e, 1); });
-    save();
-    VAKITLER.forEach(function (v) { renderCard(v.k); });
-    renderSummary(false);
-    var after = fullDays();
-    if (after > before) celebrate(after, wasHidden);
-    else {
-      toast("Her vakitten birer kaza eklendi");
-      if (navigator.vibrate) { try { navigator.vibrate(20); } catch (e) {} }
-    }
-    dayUndo = added;
-    dayBtn.classList.add("undoing");
-    document.getElementById("dayBtnTxt").textContent = "Geri al";
-    document.getElementById("dayBtnSub").textContent = "6 vakit eklendi";
-    dayTimer = setTimeout(dayBtnReset, 6000);
-  });
 
   function celebrate(n, wasHidden) {
     eda.classList.remove("rise", "glow");
@@ -2123,11 +2100,13 @@
 
   // Her günün hedefi o sabah kalan sayfanın kalan güne bölümüdür (yukarı yuvarlanır).
   // Eksik kalan sayfa sonraki günlere, fazla okunan sayfa sonraki günlerden düşülerek dağılır.
+  // Takipten önce okunmuş sayfalar (it.pre) okunmuş sayılır; plan geri kalanı süreye böler.
   function rdCompute(it) {
     var today = startOfDay(new Date());
     var start = parseDay(it.start);
     var end = addDays(start, it.days - 1);
-    var byDay = {}, totalRead = 0, beforeStart = 0;
+    var pre = it.pre || 0;
+    var byDay = {}, totalRead = pre, beforeStart = pre;
     it.logs.forEach(function (l) {
       var d = new Date(l.t), k = dayKey(d);
       byDay[k] = (byDay[k] || 0) + l.p;
@@ -2142,12 +2121,12 @@
       rows.push({ d: new Date(d), need: need, read: read });
       rem = Math.max(0, rem - read);
     }
-    var todayRow = rows[rows.length - 1] || { need: Math.ceil(it.total / it.days), read: 0 };
+    var todayRow = rows[rows.length - 1] || { need: Math.ceil((it.total - pre) / it.days), read: 0 };
     return {
       it: it, today: today, start: start, end: end, rows: rows, byDay: byDay,
-      readRaw: totalRead,
+      readRaw: totalRead, pre: pre,
       read: Math.min(totalRead, it.total), remain: Math.max(0, it.total - totalRead),
-      daysLeft: diffDays(end, today) + 1, plan: it.total / it.days,
+      daysLeft: diffDays(end, today) + 1, plan: (it.total - pre) / it.days,
       dayNo: diffDays(today, start) + 1,
       todayNeed: todayRow.need, todayRead: todayRow.read,
       todayLeft: Math.max(0, todayRow.need - todayRow.read),
@@ -2162,7 +2141,7 @@
     if (c.daysLeft <= 0) return { t: "Süre doldu", bad: true };
     var expPrev = c.plan * (c.dayNo - 1);
     var expNow = c.plan * c.dayNo;
-    var r = c.readRaw;
+    var r = c.readRaw - c.pre;
     if (r - expNow >= 1) return { t: Math.floor(r - expNow) + " sayfa öndesin", bad: false };
     if (expPrev - r >= 1) return { t: Math.ceil(expPrev - r) + " sayfa geridesin", bad: true };
     return { t: "Plandasın", bad: false };
@@ -2232,26 +2211,39 @@
   }
 
   // Hedef formu
-  function rdPreview() {
-    var total = Number($("rdTotal").value), days = Number($("rdDays").value);
-    var p = $("rdPreview");
-    if (!(total > 0) || !(days > 0)) { p.textContent = "Toplam sayfa ve gün sayısını yazınca günlük hedefin burada görünür."; return; }
-    var sv = $("rdStartDate").value;
-    var start = /^\d{4}-\d{2}-\d{2}$/.test(sv) ? parseDay(sv) : startOfDay(new Date());
-    var end = addDays(start, days - 1);
-    p.innerHTML = "";
-    p.appendChild(document.createTextNode("Günde "));
-    p.appendChild(el("b", "", String(Math.ceil(total / days))));
-    p.appendChild(document.createTextNode(" sayfa okursan " + fmtDay.format(end) + " günü bitirirsin." +
-      (dayKey(start) !== dayKey(new Date()) ? " Başlangıç: " + fmtShort.format(start) + "." : "")));
+  // Gün sayısı iki tarihten, ikisi de dahil olarak hesaplanır
+  var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  function formDays() {
+    var sv = $("rdStartDate").value, ev = $("rdEndDate").value;
+    if (!DATE_RE.test(sv) || !DATE_RE.test(ev)) return 0;
+    return diffDays(parseDay(ev), parseDay(sv)) + 1;
   }
-  ["rdTotal", "rdDays", "rdStartDate"].forEach(function (id) { $(id).addEventListener("input", rdPreview); });
+  function formPre() { return Number($("rdPre").value || 0); }
+  function rdPreview() {
+    var total = Number($("rdTotal").value), days = formDays(), pre = formPre();
+    var p = $("rdPreview");
+    if (DATE_RE.test($("rdStartDate").value)) $("rdEndDate").min = $("rdStartDate").value;
+    if (!(total > 0) || !$("rdEndDate").value) { p.textContent = "Toplam sayfayı ve bitiş tarihini seçince günde kaç sayfa okuman gerektiği burada görünür."; return; }
+    if (!(days > 0)) { p.textContent = "Bitiş tarihi başlangıçtan önce olamaz."; return; }
+    if (!(pre >= 0 && pre % 1 === 0 && pre < total)) { p.textContent = "Daha önce okuduğun sayfa toplamdan az, tam sayı olmalı."; return; }
+    p.innerHTML = "";
+    if (pre) p.appendChild(document.createTextNode((pre + 1) + ". sayfadan başlayıp kalan " + (total - pre) + " sayfayı "));
+    p.appendChild(document.createTextNode(days + " gün" + (pre ? "de bitirmek için" : " ·") + " günde "));
+    p.appendChild(el("b", "", String(Math.ceil((total - pre) / days))));
+    p.appendChild(document.createTextNode(" sayfa okuyacaksın. " + fmtShort.format(parseDay($("rdStartDate").value)) + " – " + fmtDay.format(parseDay($("rdEndDate").value)) + "."));
+  }
+  ["rdTotal", "rdPre", "rdStartDate", "rdEndDate"].forEach(function (id) { $(id).addEventListener("input", rdPreview); });
+  function setEndAfter(n) {
+    var sv = $("rdStartDate").value;
+    var start = DATE_RE.test(sv) ? parseDay(sv) : startOfDay(new Date());
+    $("rdEndDate").value = dayKey(addDays(start, n - 1));
+  }
   document.querySelectorAll("[data-preset]").forEach(function (b) {
     b.addEventListener("click", function () {
       var p = b.getAttribute("data-preset");
       $("rdName").value = p === "hatim" ? "Kur'an-ı Kerim (Hatim)" : "Kur'an-ı Kerim (1 cüz)";
       $("rdTotal").value = p === "hatim" ? 604 : 20;
-      if (!$("rdDays").value) $("rdDays").value = p === "hatim" ? 30 : 7;
+      if (!$("rdEndDate").value) setEndAfter(p === "hatim" ? 30 : 7);
       rdPreview();
     });
   });
@@ -2263,20 +2255,25 @@
     $("rdCancel").hidden = !it && !rd.items.length;
     $("rdName").value = it ? it.name : "";
     $("rdTotal").value = it ? it.total : "";
-    $("rdDays").value = it ? it.days : "";
+    $("rdPre").value = it && it.pre ? it.pre : "";
     $("rdStartDate").value = it ? it.start : dayKey(new Date());
+    $("rdEndDate").value = it ? dayKey(addDays(parseDay(it.start), it.days - 1)) : "";
     $("rdStartDate").max = dayKey(new Date());
     showRdView("setup", scroll !== false);
     rdPreview();
   }
   $("rdNewBtn").addEventListener("click", function () { openSetup(null); });
   $("rdStart").addEventListener("click", function () {
-    var total = Number($("rdTotal").value), days = Number($("rdDays").value);
+    var total = Number($("rdTotal").value), days = formDays();
     if (!(total >= 1 && total % 1 === 0)) { toast("Toplam sayfa 1 veya daha büyük bir tam sayı olmalı."); return; }
-    if (!(days >= 1 && days % 1 === 0)) { toast("Gün sayısı 1 veya daha büyük bir tam sayı olmalı."); return; }
     var sv = $("rdStartDate").value, todayK = dayKey(new Date());
-    if (/^\d{4}-\d{2}-\d{2}$/.test(sv) && sv > todayK) { toast("Başlangıç tarihi ileri bir gün olamaz."); return; }
-    var startVal = /^\d{4}-\d{2}-\d{2}$/.test(sv) ? sv : todayK;
+    if (!DATE_RE.test(sv)) { toast("Başlangıç tarihini seç."); return; }
+    if (sv > todayK) { toast("Başlangıç tarihi ileri bir gün olamaz."); return; }
+    if (!DATE_RE.test($("rdEndDate").value)) { toast("Bitiş tarihini seç."); return; }
+    if (!(days >= 1)) { toast("Bitiş tarihi başlangıçtan önce olamaz."); return; }
+    var pre = formPre();
+    if (!(pre >= 0 && pre % 1 === 0 && pre < total)) { toast("Daha önce okuduğun sayfa toplamdan az, tam sayı olmalı."); return; }
+    var startVal = sv;
     var name = $("rdName").value.trim() || "Okuma " + (rd.items.length + 1);
     var it = rdEditId ? rdFind(rdEditId) : null;
     if (it) {
@@ -2285,8 +2282,9 @@
     } else {
       it = { id: newId(), name: name, total: total, days: days, start: startVal, logs: [] };
       rd.items.push(it);
-      toast(name + " başladı. Günde " + Math.ceil(total / days) + " sayfa.");
+      toast(name + " başladı. Günde " + Math.ceil((total - pre) / days) + " sayfa.");
     }
+    if (pre) it.pre = pre; else delete it.pre;
     rdEditId = null;
     rdOpenId = it.id; rdSel = null;
     rdSave();
@@ -2486,11 +2484,20 @@
       where.appendChild(el("b", "", from + ". sayfa"));
       if (c.todayLeft > 0) where.appendChild(document.createTextNode(" · bugün " + from + "–" + Math.min(it.total, c.read + c.todayLeft) + " arası"));
     }
-    // Plandan geriyse: bugün akşama kadar plana yetişmek için okunması gereken
-    var catchUp = Math.ceil(c.plan * Math.min(c.dayNo, it.days) - c.readRaw);
-    if (!c.done && c.daysLeft > 0 && s.bad && catchUp > c.todayLeft) {
-      var sub = $("rdTodaySub");
-      sub.textContent = sub.textContent.replace(/\.$/, "") + ". Plana bugün yetişmek için " + catchUp + " sayfa gerekir.";
+    // Eksik ya da fazla okununca kalan sayfa kalan günlere yeniden bölünür; günlük yeni hedef söylenir
+    var replan = $("rdReplan"), planDay = Math.ceil(c.plan);
+    replan.hidden = true;
+    if (!c.done && c.daysLeft > 0 && c.dayNo > 1 && c.todayNeed !== planDay) {
+      var more = c.todayNeed > planDay;
+      replan.hidden = false;
+      replan.innerHTML = "";
+      replan.appendChild(document.createTextNode((more ? "Eksik kaldığın için" : "Önde olduğun için") +
+        " günde " + planDay + " sayfa yerine kalan " + c.daysLeft + " gün boyunca günde "));
+      replan.appendChild(el("b", "", c.todayNeed + " sayfa"));
+      replan.appendChild(document.createTextNode(more ? " okursan hedefine yetişirsin." : " okuman yeterli."));
+    } else if (!c.done && c.daysLeft <= 0) {
+      replan.hidden = false;
+      replan.textContent = "Süre doldu, " + c.remain + " sayfa kaldı. Bitiş tarihini ileri almak için hedefi düzenle.";
     }
     if (document.activeElement !== rdPages) rdPages.value = Math.max(1, c.todayLeft || 1);
     var dateIn = $("rdDate"), tk = dayKey(new Date());
