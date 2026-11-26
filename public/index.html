@@ -2097,6 +2097,9 @@
   function diffDays(a, b) { return Math.round((startOfDay(a) - startOfDay(b)) / 864e5); }
   var fmtRow = dtf({ day: "numeric", month: "short", weekday: "short" });
   var $ = function (id) { return document.getElementById(id); };
+  // Virgülden sonra en çok iki basamak: 8,25 · 6
+  var nf2 = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 });
+  function fmt2(n) { return nf2.format(n); }
 
   // Her günün hedefi o sabah kalan sayfanın kalan güne bölümüdür (yukarı yuvarlanır).
   // Eksik kalan sayfa sonraki günlere, fazla okunan sayfa sonraki günlerden düşülerek dağılır.
@@ -2121,12 +2124,14 @@
       rows.push({ d: new Date(d), need: need, read: read });
       rem = Math.max(0, rem - read);
     }
-    var todayRow = rows[rows.length - 1] || { need: Math.ceil((it.total - pre) / it.days), read: 0 };
+    // İleri tarihli planda bugün için hedef yoktur
+    var upcoming = start > today;
+    var todayRow = rows[rows.length - 1] || { need: 0, read: 0 };
     return {
       it: it, today: today, start: start, end: end, rows: rows, byDay: byDay,
-      readRaw: totalRead, pre: pre,
+      readRaw: totalRead, pre: pre, upcoming: upcoming,
       read: Math.min(totalRead, it.total), remain: Math.max(0, it.total - totalRead),
-      daysLeft: diffDays(end, today) + 1, plan: (it.total - pre) / it.days,
+      daysLeft: upcoming ? it.days : diffDays(end, today) + 1, plan: (it.total - pre) / it.days,
       dayNo: diffDays(today, start) + 1,
       todayNeed: todayRow.need, todayRead: todayRow.read,
       todayLeft: Math.max(0, todayRow.need - todayRow.read),
@@ -2138,12 +2143,13 @@
   // Bugünün payı henüz okunmadıysa "geride" sayılmaz; bugünün payını da aşınca "önde" olur.
   function rdStatusOf(c) {
     if (c.done) return { t: "Tamamlandı", bad: false };
+    if (c.upcoming) return { t: fmtShort.format(c.start) + " başlıyor", bad: false };
     if (c.daysLeft <= 0) return { t: "Süre doldu", bad: true };
     var expPrev = c.plan * (c.dayNo - 1);
     var expNow = c.plan * c.dayNo;
     var r = c.readRaw - c.pre;
-    if (r - expNow >= 1) return { t: Math.floor(r - expNow) + " sayfa öndesin", bad: false };
-    if (expPrev - r >= 1) return { t: Math.ceil(expPrev - r) + " sayfa geridesin", bad: true };
+    if (r - expNow >= 1) return { t: Math.floor(r - expNow) + " sayfa öndesin", bad: false, k: "ahead" };
+    if (expPrev - r >= 1) return { t: Math.ceil(expPrev - r) + " sayfa geridesin", bad: true, k: "behind" };
     return { t: "Plandasın", bad: false };
   }
 
@@ -2176,7 +2182,7 @@
     var sumLeft = 0, active = 0, doneToday = 0;
     rd.items.forEach(function (it) {
       var c = rdCompute(it), s = rdStatusOf(c);
-      if (!c.done) { active++; sumLeft += c.todayLeft; if (c.todayLeft === 0) doneToday++; }
+      if (!c.done && !c.upcoming) { active++; sumLeft += c.todayLeft; if (c.todayLeft === 0) doneToday++; }
       var pct = Math.round(c.read / it.total * 100);
       var card = el("button", "rd-card");
       card.type = "button";
@@ -2184,9 +2190,10 @@
       head.appendChild(el("span", "name", it.name));
       head.appendChild(el("span", "pill sm" + (s.bad ? " behind" : ""), s.t));
       card.appendChild(head);
-      var ok = c.done || c.todayLeft === 0;
+      var ok = !c.upcoming && (c.done || c.todayLeft === 0);
       card.appendChild(el("div", "today" + (ok ? " ok" : ""),
-        c.done ? "Tamamlandı ✓" : c.todayLeft === 0 ? "Bugün tamam ✓" : "Bugün " + c.todayLeft + " sayfa kaldı"));
+        c.done ? "Tamamlandı ✓" : c.upcoming ? "Planlandı · günde " + fmt2(c.plan) + " sayfa" :
+        c.todayLeft === 0 ? "Bugün tamam ✓" : "Bugün " + c.todayLeft + " sayfa kaldı"));
       if (!c.done) card.appendChild(el("div", "where", (c.read + 1) + ". sayfadan devam"));
       var bar = el("div", "bar"), fill = el("span");
       fill.style.width = pct + "%";
@@ -2258,7 +2265,6 @@
     $("rdPre").value = it && it.pre ? it.pre : "";
     $("rdStartDate").value = it ? it.start : dayKey(new Date());
     $("rdEndDate").value = it ? dayKey(addDays(parseDay(it.start), it.days - 1)) : "";
-    $("rdStartDate").max = dayKey(new Date());
     showRdView("setup", scroll !== false);
     rdPreview();
   }
@@ -2268,7 +2274,6 @@
     if (!(total >= 1 && total % 1 === 0)) { toast("Toplam sayfa 1 veya daha büyük bir tam sayı olmalı."); return; }
     var sv = $("rdStartDate").value, todayK = dayKey(new Date());
     if (!DATE_RE.test(sv)) { toast("Başlangıç tarihini seç."); return; }
-    if (sv > todayK) { toast("Başlangıç tarihi ileri bir gün olamaz."); return; }
     if (!DATE_RE.test($("rdEndDate").value)) { toast("Bitiş tarihini seç."); return; }
     if (!(days >= 1)) { toast("Bitiş tarihi başlangıçtan önce olamaz."); return; }
     var pre = formPre();
@@ -2282,7 +2287,8 @@
     } else {
       it = { id: newId(), name: name, total: total, days: days, start: startVal, logs: [] };
       rd.items.push(it);
-      toast(name + " başladı. Günde " + Math.ceil((total - pre) / days) + " sayfa.");
+      toast(name + (sv > todayK ? " " + fmtShort.format(parseDay(sv)) + " için planlandı" : " başladı") +
+        ". Günde " + fmt2((total - pre) / days) + " sayfa.");
     }
     if (pre) it.pre = pre; else delete it.pre;
     rdEditId = null;
@@ -2325,6 +2331,7 @@
     var before = rdCompute(it);
     // Seçilen gün bugün değilse kayıt o günün öğlesine yazılır (geçmişi doldurmak için)
     var dv = $("rdDate").value, todayK = dayKey(new Date());
+    if (todayK < it.start) { toast("Bu okuma " + fmtShort.format(parseDay(it.start)) + " günü başlıyor; o güne kadar kayıt eklenemez."); return; }
     var t = Date.now(), past = false;
     if (/^\d{4}-\d{2}-\d{2}$/.test(dv) && dv !== todayK) {
       if (dv > todayK) { toast("İleri bir güne okuma eklenemez."); return; }
@@ -2463,6 +2470,11 @@
       $("rdTodayLeft").textContent = "✓";
       $("rdTodayUnit").textContent = it.total + " sayfa";
       $("rdTodaySub").textContent = "Allah kabul etsin.";
+    } else if (c.upcoming) {
+      $("rdHeroLbl").textContent = "Plan henüz başlamadı";
+      $("rdTodayLeft").textContent = fmt2(c.plan);
+      $("rdTodayUnit").textContent = "sayfa / gün";
+      $("rdTodaySub").textContent = fmtDay.format(c.start) + " başlıyor · bitiş " + fmtShort.format(c.end);
     } else if (c.todayLeft === 0) {
       $("rdHeroLbl").textContent = "Bugünkü hedef tamam";
       $("rdTodayLeft").textContent = c.todayRead;
@@ -2484,16 +2496,19 @@
       where.appendChild(el("b", "", from + ". sayfa"));
       if (c.todayLeft > 0) where.appendChild(document.createTextNode(" · bugün " + from + "–" + Math.min(it.total, c.read + c.todayLeft) + " arası"));
     }
-    // Eksik ya da fazla okununca kalan sayfa kalan günlere yeniden bölünür; günlük yeni hedef söylenir
-    var replan = $("rdReplan"), planDay = Math.ceil(c.plan);
+    // Eksik ya da fazla okununca kalan sayfa kalan günlere küsüratlı bölünür; her kayıt ekleme/geri almada yeniden hesaplanır.
+    // Bugünün hedefi bitmediyse bugün de kalan günlere sayılır, bittiyse yarından itibaren bölünür.
+    var replan = $("rdReplan");
     replan.hidden = true;
-    if (!c.done && c.daysLeft > 0 && c.dayNo > 1 && c.todayNeed !== planDay) {
-      var more = c.todayNeed > planDay;
+    var nLeft = c.todayLeft > 0 ? c.daysLeft : c.daysLeft - 1;
+    if (!c.done && nLeft > 0 && (s.k === "ahead" || s.k === "behind")) {
+      var more = s.k === "behind";
       replan.hidden = false;
       replan.innerHTML = "";
       replan.appendChild(document.createTextNode((more ? "Eksik kaldığın için" : "Önde olduğun için") +
-        " günde " + planDay + " sayfa yerine kalan " + c.daysLeft + " gün boyunca günde "));
-      replan.appendChild(el("b", "", c.todayNeed + " sayfa"));
+        " günde " + fmt2(c.plan) + " sayfa yerine " + (c.todayLeft > 0 ? "" : "yarından itibaren ") +
+        "kalan " + nLeft + " gün boyunca günde "));
+      replan.appendChild(el("b", "", fmt2(c.remain / nLeft) + " sayfa"));
       replan.appendChild(document.createTextNode(more ? " okursan hedefine yetişirsin." : " okuman yeterli."));
     } else if (!c.done && c.daysLeft <= 0) {
       replan.hidden = false;
@@ -2501,7 +2516,7 @@
     }
     if (document.activeElement !== rdPages) rdPages.value = Math.max(1, c.todayLeft || 1);
     var dateIn = $("rdDate"), tk = dayKey(new Date());
-    dateIn.min = it.start; dateIn.max = tk;
+    dateIn.min = it.start < tk ? it.start : tk; dateIn.max = tk;
     if (!dateIn.value || dateIn.value > tk || dateIn.value < it.start) dateIn.value = tk;
 
     $("rdRead").textContent = c.read;
